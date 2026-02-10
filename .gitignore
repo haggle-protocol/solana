@@ -1,0 +1,22 @@
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+.env
+*.secret
+credentials.json
+
+# Build artifacts
+*.tar.bz2
+temp_releases.json
+validator-err.log
+
+# Demo state (contains keypairs)
+demo/demo-state.json
+
+# IDE
+.vscode
+.idea

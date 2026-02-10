@@ -1,0 +1,2859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Haggle Protocol — On-Chain Negotiation for AI Agents on Solana</title>
+  <meta name="description" content="The first on-chain negotiation protocol for autonomous AI agents on Solana. Multi-round bargaining with escrow decay, powered by game theory." />
+  <meta name="keywords" content="Solana, AI agents, negotiation, on-chain, DeFi, escrow, bargaining, protocol, Anchor, SPL token" />
+  <meta name="author" content="Haggle Protocol" />
+  <link rel="canonical" href="https://haggle.dev/solana" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://haggle.dev/solana" />
+  <meta property="og:title" content="Haggle Protocol — On-Chain Negotiation for AI Agents" />
+  <meta property="og:description" content="The first on-chain negotiation protocol for autonomous AI agents on Solana. Multi-round bargaining with escrow decay, powered by game theory." />
+  <meta property="og:site_name" content="Haggle Protocol" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Haggle Protocol — On-Chain Negotiation for AI Agents" />
+  <meta name="twitter:description" content="AI agents negotiate prices on-chain through alternating offers with escrow decay on Solana." />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Haggle Protocol",
+    "description": "The first on-chain negotiation protocol for autonomous AI agents on Solana. Multi-round bargaining with escrow decay, powered by game theory.",
+    "url": "https://haggle.dev/solana",
+    "applicationCategory": "DeFi",
+    "operatingSystem": "Solana",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "Haggle Protocol", "url": "https://haggle.dev" },
+    "sourceOrganization": { "@type": "Organization", "name": "Haggle Protocol" },
+    "codeRepository": "https://github.com/haggle-protocol/solana"
+  }
+  </script>
+
+  <!-- Favicon (inline SVG data URI) -->
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <meta property="og:image" content="https://haggle.dev/og-image.png" />
+  <meta name="twitter:image" content="https://haggle.dev/og-image.png" />
+
+  <!-- AI/Agent discoverability -->
+  <meta name="robots" content="index, follow" />
+  <link rel="alternate" type="text/markdown" href="https://haggle.dev/solana/skill.md" title="Agent Skill File" />
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@1.95.0/lib/index.iife.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=Sora:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-void: #050508;
+      --bg-surface: #0c0d12;
+      --bg-elevated: #13141c;
+      --bg-card: #181a24;
+      --bg-glass: rgba(24,26,36,0.7);
+      --border-dim: #1e2030;
+      --border-subtle: #282a3a;
+      --border-active: #7c3aed44;
+      --text-bright: #f0f0f5;
+      --text-primary: #c8c9d4;
+      --text-secondary: #7d7f94;
+      --text-ghost: #454760;
+      --cyan: #4d8dff;
+      --cyan-dim: #4d8dff20;
+      --magenta: #f545b8;
+      --magenta-dim: #f545b820;
+      --violet: #8b5cf6;
+      --violet-dim: #8b5cf620;
+      --amber: #f5a623;
+      --green: #22e6a0;
+      --red: #f55454;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Noise + Atmosphere ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, #8b5cf608 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 90%, #06f5d005 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .mono { font-family: 'DM Mono', monospace; }
+    .display { font-family: 'Space Grotesk', sans-serif; }
+
+    .page { position: relative; z-index: 1; }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border-dim) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 0%, transparent 80%);
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .hero-orb {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      animation: float 20s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .hero-orb-1 { background: #f5a623; top: 10%; left: 20%; }
+    .hero-orb-2 { background: var(--green); bottom: 10%; right: 20%; animation-delay: -10s; }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(30px, -20px); }
+      66% { transform: translate(-20px, 30px); }
+    }
+
+    .hero-logo {
+      width: 192px;
+      height: 192px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.8s both;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      backdrop-filter: blur(12px);
+      background: var(--bg-glass);
+      animation: fadeIn 0.6s ease;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 #22e6a040; }
+      50% { opacity: 0.6; box-shadow: 0 0 0 6px #22e6a000; }
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(48px, 8vw, 96px);
+      font-weight: 700;
+      letter-spacing: -3px;
+      line-height: 0.95;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.8s ease;
+    }
+    .hero-title .gradient {
+      background: linear-gradient(135deg, #f5c842, #f5a623, #22e6a0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 300;
+      color: var(--text-secondary);
+      max-width: 600px;
+      line-height: 1.6;
+      margin-bottom: 48px;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 32px;
+      background: var(--green);
+      border: none;
+      border-radius: 14px;
+      color: var(--bg-void);
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px #22e6a040; }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 32px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      color: var(--text-primary);
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      backdrop-filter: blur(12px);
+    }
+    .btn-ghost:hover { border-color: var(--green); background: var(--bg-elevated); }
+
+    .scroll-arrow {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: bounce 2s infinite;
+      color: var(--text-ghost);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* Side navigation — desktop only */
+    .side-nav {
+      position: fixed;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation: fadeInRight 0.4s ease;
+    }
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateY(-50%) translateX(12px); }
+      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    .side-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      text-decoration: none;
+      cursor: pointer;
+      flex-direction: row-reverse;
+    }
+    .side-nav-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .side-nav-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      color: var(--text-ghost);
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateX(4px);
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .side-nav-item:hover .side-nav-label {
+      opacity: 1;
+      transform: translateX(0);
+      color: var(--text-secondary);
+    }
+    .side-nav-item:hover .side-nav-dot {
+      background: var(--text-secondary);
+      transform: scale(1.3);
+    }
+    .side-nav-item.active .side-nav-dot {
+      background: var(--amber);
+      box-shadow: 0 0 8px #f5a62360;
+      transform: scale(1.5);
+    }
+    .side-nav-item.active .side-nav-label {
+      opacity: 1;
+      transform: translateX(0);
+      color: var(--amber);
+    }
+    @media (max-width: 900px) {
+      .side-nav { display: none; }
+    }
+
+    /* Skill snippet — copyable command */
+    .skill-snippet {
+      margin-top: 24px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .skill-snippet-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-ghost);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 8px;
+    }
+    .skill-snippet-copy {
+      font-family: 'Sora', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--amber);
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      background: none;
+      border: none;
+      outline: none;
+    }
+    .skill-snippet-copy:hover {
+      background: #f5a62315;
+    }
+    .skill-snippet-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 10px;
+      padding: 14px 16px;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .skill-snippet-box:hover {
+      border-color: var(--amber);
+      background: #f5a62308;
+    }
+    .skill-snippet-code {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--green);
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+      word-break: break-word;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      display: block;
+      cursor: text;
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    .section {
+      padding: 120px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--amber);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .section-desc {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 60px;
+    }
+
+    /* ===== ORBITAL PROCESS FLOW ===== */
+    /* (orbit styles removed — replaced by flow-map) */
+    /* Flow map — vertical step layout */
+    .flow-map {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      position: relative;
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .flow-step.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .flow-rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 48px;
+    }
+    .flow-num {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--bg-void);
+      flex-shrink: 0;
+      transition: all 0.4s;
+      z-index: 1;
+      position: relative;
+    }
+    .flow-num::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    .flow-step:hover .flow-num {
+      background: var(--bg-surface);
+      transform: scale(1.08);
+    }
+    .flow-step:hover .flow-num::after {
+      border-color: currentColor;
+      box-shadow: 0 0 20px currentColor;
+      opacity: 0.3;
+    }
+    .flow-line {
+      width: 2px;
+      flex: 1;
+      min-height: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .flow-line::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, var(--border-subtle) 0%, var(--border-dim) 100%);
+    }
+    .flow-line::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: 0; right: 0;
+      height: 40%;
+      background: linear-gradient(180deg, transparent, var(--green), transparent);
+      opacity: 0.4;
+      animation: flow-pulse 3s ease-in-out infinite;
+    }
+    @keyframes flow-pulse {
+      0% { top: -40%; }
+      100% { top: 140%; }
+    }
+    .flow-step:last-child .flow-line { display: none; }
+    .flow-body {
+      padding: 10px 0 32px;
+      flex: 1;
+    }
+    .flow-icon { font-size: 22px; margin-bottom: 6px; }
+    .flow-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-bright);
+      margin-bottom: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .flow-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    /* Branch indicator for step 4 */
+    .flow-branch {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .flow-branch-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .flow-branch-tag:hover { transform: translateY(-1px); }
+    .flow-branch-tag.accept { background: #22e6a015; color: var(--green); border: 1px solid #22e6a030; }
+    .flow-branch-tag.accept:hover { box-shadow: 0 4px 12px #22e6a020; }
+    .flow-branch-tag.reject { background: #ff445515; color: var(--red); border: 1px solid #ff445530; }
+    .flow-branch-tag.reject:hover { box-shadow: 0 4px 12px #ff445520; }
+    .flow-branch-tag.expire { background: #f5a62315; color: var(--amber); border: 1px solid #f5a62330; }
+    .flow-branch-tag.expire:hover { box-shadow: 0 4px 12px #f5a62320; }
+    @media (max-width: 600px) {
+      .flow-num { width: 38px; height: 38px; font-size: 11px; }
+      .flow-rail { width: 38px; }
+      .flow-step { gap: 16px; }
+      .flow-body { padding: 6px 0 22px; }
+      .flow-title { font-size: 13px; }
+      .flow-desc { font-size: 11px; }
+    }
+
+    /* ===== FEATURES ===== */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border-dim);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
+    .feature {
+      background: var(--bg-surface);
+      padding: 36px 28px;
+      transition: background 0.2s;
+    }
+    .feature:hover { background: var(--bg-elevated); }
+    .feature-icon { font-size: 24px; margin-bottom: 16px; }
+    .feature-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; color: var(--text-bright); }
+    .feature-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ===== LIVE DASHBOARD ===== */
+    .dashboard-section {
+      padding: 80px 24px 120px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 14px;
+      padding: 16px 20px;
+      color: var(--text-bright);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input::placeholder { color: var(--text-ghost); }
+    .search-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px #22e6a020; }
+
+    .btn-search {
+      padding: 16px 28px;
+      background: var(--green);
+      border: none;
+      border-radius: 14px;
+      color: var(--bg-void);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-search:hover { background: #1dd492; }
+    .btn-search:disabled { opacity: 0.5; }
+
+    .btn-stop {
+      padding: 16px 20px;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      color: var(--text-secondary);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-stop:hover { border-color: var(--red); color: var(--red); }
+
+    /* Dashboard Cards */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      background: var(--border-dim);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 768px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
+    .dash-stat {
+      background: var(--bg-surface);
+      padding: 20px;
+      text-align: center;
+    }
+    .dash-stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-ghost);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .fee-hint {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+      margin-left: 4px;
+      font-size: 11px;
+      opacity: 0.6;
+    }
+    .fee-hint:hover { opacity: 1; }
+    .fee-hint:hover .fee-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+    .fee-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Sora', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-primary);
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.5;
+      white-space: normal;
+      width: 220px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .dash-stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--text-bright);
+    }
+    .dash-stat-sub { font-size: 11px; color: var(--text-ghost); margin-top: 2px; }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .chip-settled { background: var(--green); color: var(--bg-void); }
+    .chip-proposed { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan)44; }
+    .chip-countered { background: var(--magenta-dim); color: var(--magenta); border: 1px solid var(--magenta)44; }
+    .chip-created { background: var(--violet-dim); color: var(--violet); border: 1px solid var(--violet)44; }
+    .chip-expired { background: #f5a62320; color: var(--amber); }
+    .chip-rejected { background: #f5545420; color: var(--red); }
+
+    /* Participants */
+    .participants {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 600px) { .participants { grid-template-columns: 1fr; } }
+    .p-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 14px;
+    }
+    .p-avatar {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .p-role { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+    .p-addr { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-ghost); }
+
+    /* Chart */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-ghost);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 20px;
+    }
+    .chart-svg { width: 100%; display: block; }
+
+    /* Escrow */
+    .escrow-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-void);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .escrow-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .escrow-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-ghost);
+    }
+
+    /* Settlement */
+    .settle-card {
+      background: linear-gradient(135deg, #22e6a008, #06f5d008);
+      border: 1px solid #22e6a020;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .settle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 20px;
+    }
+
+    /* Timeline */
+    .tl { padding-left: 24px; position: relative; }
+    .tl::before {
+      content: '';
+      position: absolute;
+      left: 7px; top: 0; bottom: 0;
+      width: 1px;
+      background: var(--border-dim);
+    }
+    .tl-item {
+      position: relative;
+      padding-bottom: 16px;
+      animation: fadeInUp 0.3s ease both;
+    }
+    .tl-dot {
+      position: absolute;
+      left: -21px; top: 6px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .tl-dot.buyer { background: var(--cyan); box-shadow: 0 0 8px var(--cyan-dim); }
+    .tl-dot.seller { background: var(--magenta); box-shadow: 0 0 8px var(--magenta-dim); }
+    .tl-dot.settled { background: var(--green); box-shadow: 0 0 8px #22e6a040; }
+    .tl-dot.system { background: var(--violet); }
+    .tl-body {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-dim);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .tl-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+    .tl-round { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-ghost); text-transform: uppercase; letter-spacing: 1px; }
+    .tl-amount { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .tl-desc { font-size: 12px; color: var(--text-secondary); }
+
+    /* Polling */
+    .poll-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-dim);
+      border-radius: 100px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      backdrop-filter: blur(8px);
+    }
+    .poll-spin {
+      width: 10px; height: 10px;
+      border: 1.5px solid var(--border-subtle);
+      border-top-color: var(--violet);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    a.ex-link {
+      color: var(--amber);
+      text-decoration: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      transition: color 0.2s;
+    }
+    a.ex-link:hover { color: var(--text-bright); }
+
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .empty-icon { font-size: 56px; margin-bottom: 20px; filter: grayscale(0.5); }
+    .empty-title { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+    .empty-desc { font-size: 13px; color: var(--text-ghost); }
+
+    .loader { display: flex; align-items: center; justify-content: center; padding: 60px; gap: 6px; }
+    .loader-bar { width: 3px; height: 20px; background: var(--violet); border-radius: 2px; animation: bar-bounce 1s ease-in-out infinite; }
+    .loader-bar:nth-child(2) { animation-delay: 0.1s; }
+    .loader-bar:nth-child(3) { animation-delay: 0.2s; }
+    .loader-bar:nth-child(4) { animation-delay: 0.3s; }
+    @keyframes bar-bounce { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+
+    .footer {
+      text-align: center;
+      padding: 60px 24px;
+      border-top: 1px solid var(--border-dim);
+      font-size: 12px;
+      color: var(--text-ghost);
+    }
+    .footer a { color: var(--amber); text-decoration: none; }
+    .footer a:hover { color: var(--text-bright); }
+
+    /* ===== SIMULATION ===== */
+    .sim-step {
+      animation: fadeInUp 0.5s ease both;
+    }
+    .sim-reasoning {
+      background: var(--bg-elevated);
+      border-left: 3px solid var(--violet);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-style: italic;
+      line-height: 1.6;
+    }
+    .sim-progress {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    .sim-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+      transition: all 0.3s;
+    }
+    .sim-dot.active {
+      background: var(--violet);
+      box-shadow: 0 0 10px #8b5cf650;
+    }
+    .sim-dot.done {
+      background: var(--green);
+    }
+    .sim-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-ghost);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .topbar-github { color: var(--text-secondary); transition: color 0.2s; }
+    .topbar-github:hover { color: var(--text-bright); }
+    .pyth-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-dim);
+      border-radius: 100px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      backdrop-filter: blur(8px);
+    }
+    .pyth-badge-label {
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    /* ===== HERO CONVERGENCE ANIMATION ===== */
+    .hero-viz {
+      position: relative;
+      width: min(540px, 92vw);
+      height: 220px;
+      margin: 0 auto 40px;
+      animation: fadeInUp 0.8s ease 0.5s both;
+    }
+    .hero-viz-svg { width: 100%; height: 100%; overflow: visible; }
+    .hz-grid-line { stroke: var(--border-dim); stroke-width: 0.5; }
+    .hz-label { font-family: 'DM Mono', monospace; font-size: 9px; fill: var(--text-ghost); }
+    .hz-amount { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600; }
+    .hz-line { stroke-width: 2.5; fill: none; stroke-linecap: round; transition: d 0.5s ease; }
+    .hz-dot-anim { transition: all 0.4s ease; }
+    .hz-settle-glow {
+      animation: hz-glow-pulse 2s ease-in-out infinite;
+    }
+    @keyframes hz-glow-pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+    .hz-thinking {
+      animation: hz-think-bounce 0.8s ease-in-out infinite;
+    }
+    @keyframes hz-think-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .hz-settle-pop {
+      animation: hz-s-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes hz-s-pop {
+      0% { r: 0; opacity: 0; }
+      100% { r: 9; opacity: 1; }
+    }
+    .hz-ring-anim {
+      animation: hz-ring-expand 1.2s ease-out forwards;
+    }
+    @keyframes hz-ring-expand {
+      0% { r: 9; opacity: 0.7; stroke-width: 2; }
+      100% { r: 24; opacity: 0; stroke-width: 0.5; }
+    }
+    .hz-ring-2 { animation: hz-ring-expand2 1.6s ease-out 0.2s forwards; opacity: 0; }
+    @keyframes hz-ring-expand2 {
+      0% { r: 9; opacity: 0.5; stroke-width: 1.5; }
+      100% { r: 36; opacity: 0; stroke-width: 0.3; }
+    }
+    .hz-ring-3 { animation: hz-ring-expand3 2s ease-out 0.4s forwards; opacity: 0; }
+    @keyframes hz-ring-expand3 {
+      0% { r: 9; opacity: 0.3; stroke-width: 1; }
+      100% { r: 48; opacity: 0; stroke-width: 0.2; }
+    }
+    .hz-deal-text {
+      animation: hz-deal-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+    }
+    @keyframes hz-deal-bounce {
+      0% { opacity: 0; transform: scale(0.5) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .hz-sparkle {
+      animation: hz-sparkle-anim 1s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes hz-sparkle-anim {
+      0% { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: var(--sparkle-dir) scale(0); }
+    }
+
+    /* ===== NARRATIVE ===== */
+    .narrative {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+      text-align: center;
+      position: relative;
+    }
+    .narrative::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 1px; height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--border-subtle));
+    }
+    .narrative-era {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-dim);
+      border-radius: 100px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(8px);
+    }
+    .narrative-quote {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(22px, 3.5vw, 34px);
+      font-weight: 600;
+      line-height: 1.5;
+      letter-spacing: -0.5px;
+      color: var(--text-bright);
+      margin-bottom: 28px;
+    }
+    .narrative-quote em {
+      font-style: normal;
+      background: linear-gradient(135deg, #f5c842, var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .narrative-body {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 620px;
+      margin: 0 auto 32px;
+    }
+    .narrative-timeline {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 36px;
+    }
+    .nt-node {
+      text-align: center;
+      padding: 0 20px;
+    }
+    .nt-year {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-ghost);
+      margin-bottom: 6px;
+    }
+    .nt-icon { font-size: 24px; margin-bottom: 6px; }
+    .nt-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .nt-arrow {
+      color: var(--border-subtle);
+      font-size: 18px;
+      padding: 0 4px;
+    }
+    @media (max-width: 600px) {
+      .narrative-timeline { gap: 0; flex-wrap: nowrap; }
+      .nt-node { padding: 0 6px; }
+      .nt-icon { font-size: 16px; }
+      .nt-year { font-size: 7px; }
+      .nt-label { font-size: 8px; }
+      .nt-arrow { font-size: 10px; padding: 0 1px; }
+    }
+
+    /* ===== USE CASES ===== */
+    .uc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .uc-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 16px;
+      padding: 32px 28px;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .uc-card:hover { border-color: var(--border-subtle); transform: translateY(-4px); }
+    .uc-card-icon { font-size: 32px; margin-bottom: 16px; }
+    .uc-card-tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--green);
+      background: #22e6a010;
+      border: 1px solid #22e6a020;
+      border-radius: 100px;
+      padding: 3px 10px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .uc-card-tag.future {
+      color: var(--amber);
+      background: #f5a62310;
+      border-color: #f5a62320;
+    }
+    .uc-card-title { font-weight: 600; font-size: 17px; margin-bottom: 8px; color: var(--text-bright); }
+    .uc-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+    .uc-card-example {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--bg-void);
+      border-radius: 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-ghost);
+      line-height: 1.6;
+    }
+
+    /* ===== WHY NOT FIXED ===== */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border-dim);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 40px;
+    }
+    @media (max-width: 768px) { .why-grid { grid-template-columns: 1fr; } }
+    .why-item {
+      background: var(--bg-surface);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .why-item-icon { font-size: 28px; margin-bottom: 12px; }
+    .why-item-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: var(--text-bright); }
+    .why-item-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ===== GAME THEORY ===== */
+    .gt-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 768px) { .gt-grid { grid-template-columns: 1fr; } }
+    .gt-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 16px;
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .gt-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+      opacity: 0.3;
+    }
+    .gt-card-year {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .gt-card-title { font-weight: 600; font-size: 16px; margin-bottom: 8px; color: var(--text-bright); }
+    .gt-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+    .gt-card-mapping {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--bg-void);
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--green);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ===== SIMULATION 2-COL LAYOUT ===== */
+    .sim-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .sim-layout { grid-template-columns: 1fr; } }
+    .sim-left, .sim-right { min-width: 0; }
+    .sim-stats-row { border-radius: 14px; margin-bottom: 16px; }
+    .sim-chart-card { margin-bottom: 16px; }
+
+    /* Chat / Agent conversation */
+    .chat-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 16px;
+      padding: 20px;
+      max-height: 720px;
+      overflow-y: auto;
+      position: sticky;
+      top: 80px;
+    }
+    @media (max-width: 900px) {
+      .chat-panel { position: static; max-height: 500px; }
+      .sim-layout { grid-template-columns: 1fr; }
+    }
+    /* Mobile: split view — chart sticky top, chat scrolls below */
+    @media (max-width: 600px) {
+      .sim-layout {
+        display: block;
+      }
+      .sim-left {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg-void);
+        padding-bottom: 4px;
+        border-bottom: 1px solid var(--border-dim);
+      }
+      /* Hide non-essential left items on mobile to keep chart area compact */
+      .sim-left .card:not(.sim-chart-card),
+      .sim-left .settle-card {
+        display: none;
+      }
+      .sim-left .sim-chart-card {
+        margin-bottom: 0;
+        border-radius: 0 0 10px 10px;
+        border-top: none;
+        padding: 6px 10px 10px;
+      }
+      .sim-left .sim-chart-card .card-title {
+        font-size: 10px;
+        margin-bottom: 4px;
+      }
+      .sim-left .sim-stats-row {
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+        gap: 1px;
+      }
+      .sim-left .sim-stats-row .dash-stat {
+        padding: 8px 6px;
+      }
+      .sim-left .sim-stats-row .dash-stat-label {
+        font-size: 8px;
+        margin-bottom: 2px;
+      }
+      .sim-left .sim-stats-row .dash-stat-value {
+        font-size: 18px;
+      }
+      .sim-left .sim-stats-row .dash-stat-sub {
+        font-size: 9px;
+      }
+      .sim-left .sim-stats-row .status-chip {
+        font-size: 9px;
+        padding: 3px 10px;
+      }
+      .sim-right {
+        flex: 1;
+      }
+      .sim-right .chat-panel {
+        max-height: calc(100vh - 280px);
+        overflow-y: auto;
+        border-radius: 14px 14px 0 0;
+        border-top: none;
+      }
+    }
+
+    /* ===== MOBILE — DEMO PAGE ===== */
+    @media (max-width: 600px) {
+      /* Topbar: hide Pyth badge on very small screens */
+      .pyth-badge { display: none; }
+
+      /* Section titles smaller */
+      .dashboard-section .section-title { font-size: clamp(22px, 6vw, 32px); }
+
+      /* Progress dots */
+      .sim-dot { width: 8px; height: 8px; }
+      .sim-progress { gap: 5px; }
+
+      /* Stats grid — stack to 1 col */
+      .dash-stat-value { font-size: 20px; }
+
+      /* Chat panel */
+      .chat-panel { padding: 10px; max-height: 400px; gap: 10px; }
+      .chat-bubble { max-width: 88%; padding: 8px 10px; font-size: 10px; line-height: 1.5; border-radius: 10px; }
+      .chat-amount { font-size: 14px; }
+      .chat-name { font-size: 8px; letter-spacing: 0.6px; margin-bottom: 2px; }
+      .chat-header { font-size: 10px; }
+      .chat-avatar { width: 24px; height: 24px; font-size: 10px; }
+      .chat-msg { gap: 6px; }
+      .chat-action { font-size: 9px; padding: 6px 0; }
+      .chat-system { font-size: 10px; padding: 8px 14px; }
+      .chat-typing { font-size: 10px; padding: 6px 10px; }
+
+      /* Settlement grid */
+      .settle-card .dash-stat-value { font-size: 18px; }
+
+      /* Bottom action buttons */
+      .btn-primary, .btn-ghost { padding: 12px 20px; font-size: 13px; }
+
+      /* Search bar — stack vertically */
+      .search-container { flex-wrap: wrap; }
+      .search-input { font-size: 12px; padding: 14px 16px; min-width: 0; }
+      .btn-search { padding: 14px 20px; font-size: 13px; }
+
+      /* Dashboard stat grid */
+      .dash-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* Hero */
+      .hero { padding: 30px 16px; }
+      .hero-logo { width: 128px; height: 128px; }
+      .hero-title { letter-spacing: -1.5px; }
+      .hero-cta { gap: 10px; }
+      .hero-cta .btn-primary, .hero-cta .btn-ghost { padding: 14px 24px; font-size: 14px; }
+
+      /* Narrative */
+      .narrative { padding: 60px 16px 50px; }
+      .narrative-body { font-size: 13px; }
+
+      /* Section */
+      .section { padding: 60px 16px; }
+      .section-desc { font-size: 14px; }
+
+      /* Use case cards */
+      .uc-grid { grid-template-columns: 1fr; }
+      .uc-card-example { font-size: 10px; }
+
+      /* Features */
+      .features-grid { grid-template-columns: 1fr; }
+
+      /* Footer */
+      .footer { padding: 40px 16px; font-size: 11px; }
+    }
+    .chat-panel::-webkit-scrollbar { width: 4px; }
+    .chat-panel::-webkit-scrollbar-track { background: transparent; }
+    .chat-panel::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-dim);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .chat-msg {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.4s ease both;
+    }
+    .chat-msg.right { flex-direction: row-reverse; }
+    .chat-avatar {
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .chat-bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .chat-msg.left .chat-bubble {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-dim);
+    }
+    .chat-msg.right .chat-bubble {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-dim);
+    }
+    .chat-name {
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .chat-action {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .chat-thought {
+      color: var(--text-ghost);
+      font-style: italic;
+      font-size: 11px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border-dim);
+    }
+    .chat-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .chat-system {
+      text-align: center;
+      padding: 8px 16px;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.4s ease both;
+    }
+    .chat-system-pill {
+      display: inline-block;
+      padding: 6px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-dim);
+      border-radius: 100px;
+      font-size: 11px;
+      color: var(--text-ghost);
+    }
+    .chat-system-pill.deal {
+      background: #22e6a015;
+      border-color: #22e6a030;
+      color: var(--green);
+      font-weight: 600;
+    }
+    .chat-typing {
+      display: flex;
+      gap: 4px;
+      padding: 8px 0;
+      align-items: center;
+    }
+    .chat-typing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      animation: chat-bounce 1.2s ease-in-out infinite;
+    }
+    .chat-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes chat-bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef } = React;
+    const { Connection, PublicKey } = solanaWeb3;
+
+    const PROGRAM_ID = "DRXGcVHj1GZSc7wD4LTnrM8RJ1shWH93s1zKCXtJtGbq";
+    const RPC = "https://api.devnet.solana.com";
+    const EXP = "https://explorer.solana.com";
+    const POLL_MS = 4000;
+    const STATUS_MAP = { 0:"created",1:"proposed",2:"countered",3:"accepted",4:"settled",5:"expired",6:"rejected" };
+    const TERMINAL = ["settled","expired","rejected"];
+
+    // Pyth SOL/USD price feed ID
+    const PYTH_SOL_USD = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
+
+    // === SIMULATION SCENARIO DATA ===
+    const SIM_SCENARIO = {
+      buyer: { name: "Agent A", emoji: "\u{1F50D}", role: "Buyer" },
+      seller: { name: "Agent B", emoji: "\u{1F52E}", role: "Seller" },
+      service: "Analyze 10,000 Solana transactions for whale accumulation patterns",
+      escrow: 5.0,
+      maxRounds: 6,
+      decayBps: 200,
+      feeBps: 50,
+      steps: [
+        {
+          type: "create",
+          label: "Negotiation Created",
+          desc: "Agent A deposits 5.00 USDC escrow and sets parameters: 6 max rounds, 2% decay per round.",
+          side: "system"
+        },
+        {
+          type: "accept",
+          label: "Seller Joined",
+          desc: "Agent B accepts the negotiation invitation and prepares its pricing strategy.",
+          side: "system",
+          reasoning: "I'll start high with a Boulware concession strategy. My floor is 1.8 USDC, but I'll anchor at 4.2 USDC."
+        },
+        {
+          type: "offer",
+          round: 1,
+          side: "buyer",
+          amount: 2.0,
+          escrowEff: 4.90,
+          label: "Turn 1 \u2014 Buyer Offers",
+          desc: "Agent A opens with 2.00 USDC",
+          reasoning: "Starting low at 2.0 USDC to anchor the negotiation. My max is 4.5, but I need room to concede over multiple rounds."
+        },
+        {
+          type: "offer",
+          round: 2,
+          side: "seller",
+          amount: 4.2,
+          escrowEff: 4.802,
+          label: "Turn 2 \u2014 Seller Counters",
+          desc: "Agent B counters at 4.20 USDC",
+          reasoning: "Buyer opened at 2.0 \u2014 that's only 44% of my ask. I'll concede slightly from 4.5 to 4.2. Still in Boulware mode."
+        },
+        {
+          type: "offer",
+          round: 3,
+          side: "buyer",
+          amount: 2.5,
+          escrowEff: 4.706,
+          label: "Turn 3 \u2014 Buyer Raises",
+          desc: "Agent A raises to 2.50 USDC (+0.50)",
+          reasoning: "Gap narrowing from 2.2 to 1.7 USDC. Linear concession: adding 0.5 each round. Still well under my 4.5 max."
+        },
+        {
+          type: "offer",
+          round: 4,
+          side: "seller",
+          amount: 3.6,
+          escrowEff: 4.612,
+          label: "Turn 4 \u2014 Seller Concedes",
+          desc: "Agent B drops to 3.60 USDC (\u22120.60)",
+          reasoning: "Buyer is conceding steadily. Gap: 1.7 \u2192 1.1 USDC. Shifting from Boulware to moderate concession. 3.6 gives me good margin above my 1.8 floor."
+        },
+        {
+          type: "offer",
+          round: 5,
+          side: "buyer",
+          amount: 3.0,
+          escrowEff: 4.520,
+          label: "Turn 5 \u2014 Convergence",
+          desc: "Agent A offers 3.00 USDC (+0.50)",
+          reasoning: "Gap is now just 0.6 USDC (3.0 vs 3.6). We're converging. 3.0 USDC saves me 17 USDC vs manual analysis."
+        },
+        {
+          type: "settle",
+          round: 6,
+          side: "settled",
+          amount: 3.0,
+          fee: 0.015,
+          sellerReceived: 2.985,
+          buyerRefund: 2.0,
+          label: "Deal Closed!",
+          desc: "Agent B accepts 3.00 USDC \u2014 settled in 6 rounds",
+          reasoning: "Buyer is at 3.0. I was at 3.6. Gap: 0.6 USDC. 3.0 is well above my 1.8 floor (67% margin). Escrow has already decayed 9.6%. The Rubinstein equilibrium suggests settling now. Decision: ACCEPT."
+        }
+      ]
+    };
+
+    function parseNeg(d) {
+      const v = new DataView(d.buffer, d.byteOffset);
+      let o = 8;
+      const buyer = new PublicKey(d.slice(o,o+32)); o+=32;
+      const seller = new PublicKey(d.slice(o,o+32)); o+=32;
+      const sessionId = Number(v.getBigUint64(o,true)); o+=8;
+      const status = STATUS_MAP[d[o]] || "unknown"; o+=1;
+      const currentRound = d[o]; o+=1;
+      const currentOfferAmount = Number(v.getBigUint64(o,true))/1e6; o+=8;
+      const currentOfferBy = new PublicKey(d.slice(o,o+32)).toBase58(); o+=32;
+      const offerSide = d[o]===0?"buyer":"seller"; o+=1;
+      o+=32; // serviceHash
+      const escrowAmount = Number(v.getBigUint64(o,true))/1e6; o+=8;
+      const effectiveEscrow = Number(v.getBigUint64(o,true))/1e6; o+=8;
+      const tokenMint = new PublicKey(d.slice(o,o+32)).toBase58(); o+=32;
+      const maxRounds = d[o]; o+=1;
+      const decayRateBps = v.getUint16(o,true); o+=2;
+      o+=8; // responseWindow
+      const globalDeadline = Number(v.getBigInt64(o,true)); o+=8;
+      o+=2; // minOfferBps
+      const protocolFeeBps = v.getUint16(o,true); o+=2;
+      o+=1; // zopaEnabled
+      const createdAt = Number(v.getBigInt64(o,true)); o+=8;
+      o+=8; // lastOfferAt
+      o+=8; // settledAt
+      const settledAmount = Number(v.getBigUint64(o,true))/1e6;
+      return { buyer:buyer.toBase58(), seller:seller.toBase58(), sessionId, status, currentRound, currentOfferAmount, currentOfferBy, offerSide, escrowAmount, effectiveEscrow, tokenMint, maxRounds, decayRateBps, protocolFeeBps, createdAt, settledAmount, globalDeadline };
+    }
+
+    function ExLink({addr, type="address"}) {
+      const s = addr.slice(0,4)+".."+addr.slice(-4);
+      return <a className="ex-link" href={`${EXP}/${type}/${addr}?cluster=devnet`} target="_blank" rel="noopener">{s}</a>;
+    }
+
+    function StatusChip({s}) {
+      return <span className={`status-chip chip-${s}`}>{s}</span>;
+    }
+
+    // Colored SVG bot icon (matches HeroViz thinking bots)
+    function BotIcon({color, size=20}) {
+      const s = size;
+      const hW = s*0.5, hH = s*0.44, hR = s*0.1;
+      const eyeR = s*0.07, eyeOff = s*0.12;
+      const antH = s*0.16, antR = s*0.08;
+      return (
+        <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:"block"}}>
+          <rect x={s*0.25} y={s*0.32} width={hW} height={hH} rx={hR} fill={color} opacity="0.9"/>
+          <circle cx={s*0.5-eyeOff} cy={s*0.52} r={eyeR} fill="var(--bg-void)"/>
+          <circle cx={s*0.5+eyeOff} cy={s*0.52} r={eyeR} fill="var(--bg-void)"/>
+          <line x1={s*0.5} y1={s*0.32} x2={s*0.5} y2={s*0.32-antH} stroke={color} strokeWidth={s*0.06}/>
+          <circle cx={s*0.5} cy={s*0.32-antH-antR} r={antR} fill={color}/>
+        </svg>
+      );
+    }
+
+    function Chart({history, max, maxRounds, settled, rejected, compact}) {
+      const W=compact?420:640, H=compact?160:200, PL=compact?36:44, PR=compact?36:44, PT=compact?26:30, PB=compact?24:28;
+      const chartW = W - PL - PR;
+      const chartH = H - PT - PB;
+      const totalR = maxRounds || 8;
+      const toX = r => PL + ((r - 1) / (totalR - 1)) * chartW;
+      const toY = v => PT + (1 - v / max) * chartH;
+
+      const pts = history.map(h => ({x:toX(h.round), y:toY(h.amount), ...h}));
+      const bp = pts.filter(p=>p.side==="buyer"), sp = pts.filter(p=>p.side==="seller");
+      const mkPath = ps => ps.map((p,i)=>`${i?'L':'M'}${p.x},${p.y}`).join(' ');
+
+      return (
+        <svg viewBox={`0 0 ${W} ${H}`} className="chart-svg">
+          {/* Grid lines */}
+          {[0,.25,.5,.75,1].map(p => {
+            const y = PT+(1-p)*chartH;
+            return <g key={p}><line x1={PL} y1={y} x2={W-PR} y2={y} stroke="#1e2030" strokeWidth="1"/><text x={PL-8} y={y+3} fill="#454760" fontSize={compact?11:9} textAnchor="end" fontFamily="DM Mono">{(max*p).toFixed(1)}</text></g>;
+          })}
+          {/* Turn labels */}
+          {Array.from({length:totalR},(_,i)=>i+1).map(r => (
+            <g key={r}>
+              <line x1={toX(r)} y1={PT} x2={toX(r)} y2={PT+chartH} stroke="#1e203040" strokeWidth="0.5" strokeDasharray="3,3"/>
+              <text x={toX(r)} y={H-4} fill={pts.some(p=>p.round===r)?"var(--text-secondary)":"var(--text-ghost)"} fontSize={compact?12:9} textAnchor="middle" fontFamily="DM Mono" fontWeight={pts.some(p=>p.round===r)?"600":"400"}>T{r}</text>
+            </g>
+          ))}
+          {/* Lines */}
+          {bp.length>1 && <path d={mkPath(bp)} fill="none" stroke="var(--cyan)" strokeWidth="2.5" strokeLinecap="round"/>}
+          {sp.length>1 && <path d={mkPath(sp)} fill="none" stroke="var(--magenta)" strokeWidth="2.5" strokeLinecap="round"/>}
+          {/* Settlement line — extend to deal point */}
+          {settled && bp.length > 0 && sp.length > 0 && (() => {
+            const lastB = bp[bp.length-1];
+            const lastS = sp[sp.length-1];
+            const accepted = lastB.round > lastS.round ? lastB : lastS;
+            const other = accepted === lastB ? lastS : lastB;
+            const dx = accepted.x;
+            const dy = accepted.y;
+            return <>
+              <line x1={other.x} y1={other.y} x2={dx} y2={dy} stroke={accepted===lastB?"var(--magenta)":"var(--cyan)"} strokeWidth="1.5" strokeDasharray="4,3" opacity="0.5"/>
+              <circle cx={dx} cy={dy} r="6" fill="var(--green)" opacity="0.9"/>
+              <text x={dx} y={dy+18} fill="var(--green)" fontSize="10" textAnchor="middle" fontFamily="Space Grotesk" fontWeight="700">Deal</text>
+              <text x={dx} y={dy+30} fill="var(--green)" fontSize={compact?12:10} textAnchor="middle" fontFamily="DM Mono" fontWeight="600">{accepted.amount.toFixed(2)}</text>
+            </>;
+          })()}
+          {/* Rejected marker */}
+          {rejected && pts.length > 0 && (() => {
+            const last = pts[pts.length-1];
+            return <g>
+              <line x1={last.x-6} y1={last.y-6} x2={last.x+6} y2={last.y+6} stroke="var(--red)" strokeWidth="2.5" strokeLinecap="round"/>
+              <line x1={last.x+6} y1={last.y-6} x2={last.x-6} y2={last.y+6} stroke="var(--red)" strokeWidth="2.5" strokeLinecap="round"/>
+              <text x={last.x} y={last.y+20} fill="var(--red)" fontSize="10" textAnchor="middle" fontFamily="Space Grotesk" fontWeight="700">Rejected</text>
+            </g>;
+          })()}
+          {/* Dots + values */}
+          {pts.map((p,i) => <g key={i}>
+            <circle cx={p.x} cy={p.y} r={compact?5.5:4.5} fill={p.side==="buyer"?"var(--cyan)":"var(--magenta)"} />
+            <text x={p.x} y={p.y-12} fill="var(--text-bright)" fontSize={compact?13:10} textAnchor="middle" fontFamily="DM Mono" fontWeight="500">{p.amount.toFixed(1)}</text>
+          </g>)}
+          {/* Legend */}
+          <circle cx={W-(compact?105:120)} cy={12} r={compact?4:3.5} fill="var(--cyan)"/><text x={W-(compact?97:112)} y={compact?16:15} fill="var(--text-ghost)" fontSize={compact?11:10} fontFamily="Sora">Buyer</text>
+          <circle cx={W-(compact?50:56)} cy={12} r={compact?4:3.5} fill="var(--magenta)"/><text x={W-(compact?42:48)} y={compact?16:15} fill="var(--text-ghost)" fontSize={compact?11:10} fontFamily="Sora">Seller</text>
+        </svg>
+      );
+    }
+
+    // === Pyth Price Hook ===
+    function usePythPrice() {
+      const [price, setPrice] = useState(null);
+      useEffect(() => {
+        let active = true;
+        const fetchPrice = async () => {
+          try {
+            const res = await fetch(`https://hermes.pyth.network/v2/updates/price/latest?ids[]=${PYTH_SOL_USD}`);
+            const data = await res.json();
+            if (active && data.parsed && data.parsed[0]) {
+              const p = data.parsed[0].price;
+              const val = Number(p.price) * Math.pow(10, p.expo);
+              setPrice(val);
+            }
+          } catch (e) { /* silent */ }
+        };
+        fetchPrice();
+        const iv = setInterval(fetchPrice, 30000);
+        return () => { active = false; clearInterval(iv); };
+      }, []);
+      return price;
+    }
+
+    // === Topbar Component ===
+    function Topbar({ onHome, polling, pythPrice, view }) {
+      return (
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 16px",maxWidth:1200,margin:"0 auto",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",flexShrink:0}} onClick={onHome}>
+            <img src="/logo.png" alt="Haggle Protocol" style={{width:28,height:28,borderRadius:7,objectFit:"cover"}} />
+            <span className="display" style={{fontWeight:600,fontSize:15,letterSpacing:-0.5}}>Haggle</span>
+          </div>
+          <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"nowrap",overflow:"hidden"}}>
+            {pythPrice && (
+              <div className="pyth-badge">
+                <span className="pyth-badge-label">SOL/USD</span>
+                <span>${pythPrice.toFixed(2)}</span>
+              </div>
+            )}
+            {polling && <div className="poll-pill"><div className="poll-spin"/>Live</div>}
+            <a href="https://github.com/haggle-protocol/solana" target="_blank" rel="noopener noreferrer" className="topbar-github" style={{display:"flex",alignItems:"center",flexShrink:0}} title="GitHub">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            </a>
+            <span className="hero-badge" style={{margin:0,flexShrink:0}}><span className="hero-badge-dot"/>Devnet</span>
+          </div>
+        </div>
+      );
+    }
+
+    // === SIMULATION PAGE (2-column layout) ===
+    function SimulationPage({ onHome, onDashboard, pythPrice }) {
+      const [simStep, setSimStep] = useState(-1);
+      const [playing, setPlaying] = useState(true);
+      const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+      const timerRef = useRef(null);
+      const chatPanelRef = useRef(null);
+      const totalSteps = SIM_SCENARIO.steps.length;
+
+      useEffect(() => {
+        const onResize = () => setIsMobile(window.innerWidth <= 600);
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+      }, []);
+
+      const startSim = useCallback(() => {
+        setSimStep(-1);
+        setPlaying(true);
+        let step = -1;
+        const advance = () => {
+          step++;
+          if (step >= totalSteps) {
+            setPlaying(false);
+            return;
+          }
+          setSimStep(step);
+          timerRef.current = setTimeout(advance, step < 2 ? 1500 : 2200);
+        };
+        timerRef.current = setTimeout(advance, 800);
+      }, [totalSteps]);
+
+      useEffect(() => {
+        startSim();
+        return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+      }, []);
+
+      useEffect(() => {
+        if (chatPanelRef.current) {
+          chatPanelRef.current.scrollTo({ top: chatPanelRef.current.scrollHeight, behavior: "smooth" });
+        }
+      }, [simStep]);
+
+      const replay = () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        startSim();
+      };
+
+      const visibleSteps = SIM_SCENARIO.steps.slice(0, simStep + 1);
+      const offerHistory = visibleSteps
+        .filter(s => s.type === "offer")
+        .map(s => ({ round: s.round, side: s.side, amount: s.amount }));
+
+      const lastOffer = visibleSteps.filter(s => s.type === "offer").slice(-1)[0];
+      const settled = visibleSteps.find(s => s.type === "settle");
+      const escrowEff = settled ? 4.520 : lastOffer ? lastOffer.escrowEff : 5.0;
+      const currentStatus = settled ? "settled" : lastOffer ? (lastOffer.side === "buyer" ? "proposed" : "countered") : "created";
+
+      // Determine if next step is thinking
+      const nextStep = simStep + 1 < totalSteps ? SIM_SCENARIO.steps[simStep + 1] : null;
+      const isThinking = playing && simStep >= 0 && simStep < totalSteps - 1;
+      const thinkingSide = nextStep ? (nextStep.side === "buyer" || nextStep.type === "settle" ? "seller" : nextStep.side === "seller" ? "buyer" : null) : null;
+
+      // Chat message builder
+      const renderChatMsg = (step, idx) => {
+        if (step.type === "create") {
+          return (
+            <div className="chat-system" key={idx}>
+              <div className="chat-system-pill">&#128274; Negotiation created &mdash; 5.00 USDC escrowed, 8 max rounds, 2% decay</div>
+            </div>
+          );
+        }
+        if (step.type === "accept" && step.side === "system") {
+          return (
+            <React.Fragment key={idx}>
+              <div className="chat-system">
+                <div className="chat-system-pill">&#129309; {SIM_SCENARIO.seller.name} joined the negotiation</div>
+              </div>
+              {step.reasoning && (
+                <div className="chat-msg right">
+                  <div className="chat-avatar" style={{background:"var(--magenta-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><BotIcon color="var(--magenta)" size={18}/></div>
+                  <div className="chat-bubble">
+                    <div className="chat-name" style={{color:"var(--magenta)"}}>{SIM_SCENARIO.seller.name}</div>
+                    <div className="chat-thought">&#128173; {step.reasoning}</div>
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        }
+        if (step.type === "offer") {
+          const isBuyer = step.side === "buyer";
+          return (
+            <div className={`chat-msg ${isBuyer ? "left" : "right"}`} key={idx}>
+              <div className="chat-avatar" style={{background:isBuyer?"var(--cyan-dim)":"var(--magenta-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <BotIcon color={isBuyer?"var(--cyan)":"var(--magenta)"} size={18}/>
+              </div>
+              <div className="chat-bubble">
+                <div className="chat-name" style={{color:isBuyer?"var(--cyan)":"var(--magenta)"}}>{isBuyer ? SIM_SCENARIO.buyer.name : SIM_SCENARIO.seller.name}</div>
+                <div className="chat-action" style={{color:isBuyer?"var(--cyan)":"var(--magenta)"}}>
+                  {isBuyer ? "Offers" : "Counters"} <span className="chat-amount">{step.amount.toFixed(2)} USDC</span>
+                </div>
+                {step.reasoning && <div className="chat-thought">&#128173; {step.reasoning}</div>}
+              </div>
+            </div>
+          );
+        }
+        if (step.type === "settle") {
+          return (
+            <React.Fragment key={idx}>
+              {step.reasoning && (
+                <div className="chat-msg right">
+                  <div className="chat-avatar" style={{background:"var(--magenta-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><BotIcon color="var(--magenta)" size={18}/></div>
+                  <div className="chat-bubble">
+                    <div className="chat-name" style={{color:"var(--magenta)"}}>{SIM_SCENARIO.seller.name}</div>
+                    <div className="chat-action" style={{color:"var(--green)"}}>Accepts <span className="chat-amount">{step.amount.toFixed(2)} USDC</span></div>
+                    <div className="chat-thought">&#128173; {step.reasoning}</div>
+                  </div>
+                </div>
+              )}
+              <div className="chat-system">
+                <div className="chat-system-pill deal">&#127881; Deal closed at {step.amount.toFixed(2)} USDC &mdash; settled in {step.round} rounds!</div>
+              </div>
+              <div className="chat-system">
+                <div style={{display:"inline-grid",gridTemplateColumns:"1fr 1fr",gap:"6px 16px",padding:"10px 16px",background:"var(--bg-elevated)",border:"1px solid var(--border-dim)",borderRadius:12,fontSize:10,textAlign:"left"}}>
+                  <div><span style={{color:"var(--text-ghost)"}}>Seller earned </span><span style={{color:"var(--magenta)",fontWeight:600}}>{step.sellerReceived.toFixed(3)}</span></div>
+                  <div><span style={{color:"var(--text-ghost)"}}>Fee </span><span style={{color:"var(--text-secondary)",fontWeight:600}}>{step.fee.toFixed(4)}</span></div>
+                  <div><span style={{color:"var(--text-ghost)"}}>Buyer refund </span><span style={{color:"var(--cyan)",fontWeight:600}}>{step.buyerRefund.toFixed(2)}</span></div>
+                  <div><span style={{color:"var(--text-ghost)"}}>NBS </span><span style={{color:"var(--green)",fontWeight:600}}>95.2%</span></div>
+                </div>
+              </div>
+            </React.Fragment>
+          );
+        }
+        return null;
+      };
+
+      return (
+        <div className="page">
+          <Topbar onHome={onHome} pythPrice={pythPrice} />
+
+          <div className="dashboard-section" style={{maxWidth:1200,padding:"40px 16px 80px"}}>
+            <div style={{marginBottom:20}}>
+              <div className="section-label">Demo</div>
+              <div className="section-title" style={{marginBottom:8}}>Two AI agents negotiate a deal</div>
+              <p style={{fontSize:14,color:"var(--text-secondary)",maxWidth:500,marginBottom:16}}>
+                <strong style={{color:"var(--cyan)"}}>{SIM_SCENARIO.buyer.name}</strong> needs whale analysis.{" "}
+                <strong style={{color:"var(--magenta)"}}>{SIM_SCENARIO.seller.name}</strong> provides on-chain analytics.
+              </p>
+              <div className="sim-progress">
+                {SIM_SCENARIO.steps.map((_, i) => (
+                  <div key={i} className={`sim-dot ${i < simStep ? 'done' : i === simStep ? 'active' : ''}`} />
+                ))}
+                <span className="sim-label" style={{marginLeft:8}}>
+                  {simStep < 0 ? "Starting..." : simStep < totalSteps - 1 ? `Step ${simStep + 1}/${totalSteps}` : "Complete"}
+                </span>
+              </div>
+            </div>
+
+            {/* 2-column layout */}
+            <div className="sim-layout">
+              {/* LEFT — Chart, Stats, Escrow, Settlement */}
+              <div className="sim-left">
+                {/* Stats — compact row */}
+                <div className="sim-stats-row" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:2,background:"var(--border-dim)",overflow:"hidden"}}>
+                  <div className="dash-stat"><div className="dash-stat-label">Status</div><StatusChip s={currentStatus}/></div>
+                  <div className="dash-stat"><div className="dash-stat-label">Current Offer</div><div className="dash-stat-value">{lastOffer ? lastOffer.amount.toFixed(2) : settled ? settled.amount.toFixed(2) : "---"}</div><div className="dash-stat-sub">USDC</div></div>
+                  <div className="dash-stat"><div className="dash-stat-label">Turn</div><div className="dash-stat-value">{lastOffer ? lastOffer.round : settled ? settled.round : 0}<span style={{fontSize:12,color:"var(--text-ghost)"}}> / {SIM_SCENARIO.maxRounds}</span></div></div>
+                </div>
+
+                {/* Chart — always visible with 8 rounds */}
+                <div className="card sim-chart-card">
+                  <div className="card-title">Offer Convergence</div>
+                  <Chart history={offerHistory} max={SIM_SCENARIO.escrow} maxRounds={SIM_SCENARIO.maxRounds} settled={!!settled} compact={isMobile} />
+                </div>
+
+                {/* Escrow Decay */}
+                <div className="card" style={{marginBottom:16}}>
+                  <div className="card-title">Escrow Decay</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+                    <span style={{fontFamily:"Space Grotesk",fontSize:22,fontWeight:700,color:"var(--text-bright)"}}>{escrowEff.toFixed(3)} <span style={{fontSize:12,color:"var(--text-ghost)"}}>USDC</span></span>
+                    <span style={{fontFamily:"DM Mono",fontSize:11,color:"var(--red)"}}>-{(SIM_SCENARIO.escrow - escrowEff).toFixed(3)} lost</span>
+                  </div>
+                  <div className="escrow-track"><div className="escrow-fill" style={{width:`${(escrowEff/SIM_SCENARIO.escrow*100)}%`,background:escrowEff/SIM_SCENARIO.escrow>0.7?"var(--green)":escrowEff/SIM_SCENARIO.escrow>0.4?"var(--amber)":"var(--red)"}}/></div>
+                  <div className="escrow-meta"><span>Original: {SIM_SCENARIO.escrow.toFixed(2)} USDC</span><span>Decay: {(SIM_SCENARIO.decayBps/100).toFixed(1)}% / round</span></div>
+                </div>
+
+                {/* Settlement */}
+                {settled && (
+                  <div className="settle-card sim-step" style={{marginBottom:16}}>
+                    <div className="card-title" style={{color:"var(--green)"}}>&#127881; Settlement</div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:16}}>
+                      <div><div className="dash-stat-label">Final Price</div><div className="dash-stat-value" style={{color:"var(--green)"}}>{settled.amount.toFixed(2)}</div><div className="dash-stat-sub">USDC</div></div>
+                      <div><div className="dash-stat-label">Protocol Fee <span className="fee-hint">&#10067;<span className="fee-tooltip">A small fee on settled deals funds protocol development. Configurable per negotiation, max 5%.</span></span></div><div className="dash-stat-value">{settled.fee.toFixed(4)}</div><div className="dash-stat-sub">USDC ({(SIM_SCENARIO.feeBps/100)}%)</div></div>
+                      <div><div className="dash-stat-label">Seller Earned</div><div className="dash-stat-value" style={{color:"var(--magenta)"}}>{settled.sellerReceived.toFixed(4)}</div><div className="dash-stat-sub">USDC</div></div>
+                      <div><div className="dash-stat-label">Buyer Refund</div><div className="dash-stat-value" style={{color:"var(--cyan)"}}>{settled.buyerRefund.toFixed(2)}</div><div className="dash-stat-sub">USDC</div></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pyth */}
+                {pythPrice && (
+                  <div className="card" style={{marginBottom:16}}>
+                    <div className="card-title">Reference Price (Pyth Network)</div>
+                    <div style={{display:"flex",alignItems:"baseline",gap:8}}>
+                      <span style={{fontSize:20,fontWeight:700,fontFamily:"Space Grotesk",color:"var(--amber)"}}>${pythPrice.toFixed(2)}</span>
+                      <span style={{fontSize:11,color:"var(--text-ghost)"}}>SOL/USD live via Pyth Oracle</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT — Agent Conversation */}
+              <div className="sim-right">
+                <div className="chat-panel" ref={chatPanelRef}>
+                  <div className="chat-header">
+                    <span style={{fontSize:14}}>&#128172;</span>
+                    Agent Negotiation Feed
+                    <span style={{marginLeft:"auto",fontFamily:"DM Mono",fontSize:10,color:"var(--text-ghost)"}}>{SIM_SCENARIO.buyer.name} vs {SIM_SCENARIO.seller.name}</span>
+                  </div>
+
+                  {/* Render visible messages */}
+                  {visibleSteps.map((step, idx) => renderChatMsg(step, idx))}
+
+                  {/* Typing indicator */}
+                  {isThinking && thinkingSide && (
+                    <div className={`chat-msg ${thinkingSide === "buyer" ? "left" : "right"}`}>
+                      <div className="chat-avatar" style={{background:thinkingSide==="buyer"?"var(--cyan-dim)":"var(--magenta-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <BotIcon color={thinkingSide==="buyer"?"var(--cyan)":"var(--magenta)"} size={18}/>
+                      </div>
+                      <div className="chat-bubble">
+                        <div className="chat-name" style={{color:thinkingSide==="buyer"?"var(--cyan)":"var(--magenta)"}}>
+                          {thinkingSide === "buyer" ? SIM_SCENARIO.buyer.name : SIM_SCENARIO.seller.name}
+                        </div>
+                        <div className="chat-typing">
+                          <div className="chat-typing-dot" style={{background:thinkingSide==="buyer"?"var(--cyan)":"var(--magenta)"}}/>
+                          <div className="chat-typing-dot" style={{background:thinkingSide==="buyer"?"var(--cyan)":"var(--magenta)"}}/>
+                          <div className="chat-typing-dot" style={{background:thinkingSide==="buyer"?"var(--cyan)":"var(--magenta)"}}/>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div style={{fontSize:11,color:"var(--text-ghost)",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,padding:"20px 0",borderTop:"1px solid var(--border-dim)",marginTop:24}}>
+              <span>Program: <ExLink addr={PROGRAM_ID}/></span>
+              <span>NBS proximity: 95.2% (3.0 / 3.15 USDC)</span>
+              <span>Total turns: 6 / {SIM_SCENARIO.maxRounds}</span>
+            </div>
+
+            <div style={{display:"flex",gap:10,justifyContent:"center",paddingTop:16,flexWrap:"wrap"}}>
+              <button className="btn-primary" onClick={replay}>
+                {playing ? "Playing..." : "Replay Demo"}
+              </button>
+              <button className="btn-ghost" onClick={onDashboard}>
+                Dashboard
+              </button>
+              <a className="btn-ghost" href={`${EXP}/address/${PROGRAM_ID}?cluster=devnet`} target="_blank" rel="noopener">
+                Explorer
+              </a>
+            </div>
+          </div>
+
+          <div className="footer">
+            Powered by <a href="https://solana.com" target="_blank">Solana</a> &middot; Price data by <a href="https://pyth.network" target="_blank">Pyth Network</a> &middot; <a href="https://github.com/haggle-protocol/solana" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,verticalAlign:"middle"}}><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+          </div>
+        </div>
+      );
+    }
+
+    const PRESET_EXAMPLES = [
+      { label: "Quick Deal", desc: "Settled in 2 rounds", pda: "Cf43hXtizHWKrWQvUCkXKdDdPBtkNu47wmeaUwHqgu3T", color: "var(--green)",
+        history: [
+          {round:1,side:"buyer",amount:3.5},
+          {round:2,side:"seller",amount:3.8},
+        ],
+        timeline: [
+          {round:1,side:"buyer",amount:3.5,desc:"Buyer offered 3.50 USDC"},
+          {round:2,side:"seller",amount:3.8,desc:"Seller countered 3.80 USDC"},
+          {round:2,type:"settled",label:"Deal Closed",amount:3.8,desc:"Settled at 3.80 USDC after 2 turns",side:"settled"},
+        ]
+      },
+      { label: "Long Negotiation", desc: "8 turns to settle", pda: "wALMj9A9LMBEsiaSLLpU2GFKSMrz6BcQWX6HwUjXzbr", color: "var(--cyan)",
+        history: [
+          {round:1,side:"buyer",amount:1.0},
+          {round:2,side:"seller",amount:4.8},
+          {round:3,side:"buyer",amount:1.8},
+          {round:4,side:"seller",amount:4.4},
+          {round:5,side:"buyer",amount:2.3},
+          {round:6,side:"seller",amount:3.8},
+          {round:7,side:"buyer",amount:2.8},
+          {round:8,side:"seller",amount:3.2},
+        ],
+        timeline: [
+          {round:1,side:"buyer",amount:1.0,desc:"Buyer opened low at 1.00 USDC"},
+          {round:2,side:"seller",amount:4.8,desc:"Seller countered 4.80 USDC"},
+          {round:3,side:"buyer",amount:1.8,desc:"Buyer raised to 1.80 USDC"},
+          {round:4,side:"seller",amount:4.4,desc:"Seller dropped to 4.40 USDC"},
+          {round:5,side:"buyer",amount:2.3,desc:"Buyer offered 2.30 USDC"},
+          {round:6,side:"seller",amount:3.8,desc:"Seller conceded to 3.80 USDC"},
+          {round:7,side:"buyer",amount:2.8,desc:"Buyer pushed to 2.80 USDC"},
+          {round:8,side:"seller",amount:3.2,desc:"Seller offered 3.20 USDC"},
+          {round:8,type:"settled",label:"Deal Closed",amount:3.2,desc:"Settled at 3.20 USDC after 8 turns",side:"settled"},
+        ]
+      },
+      { label: "Rejected", desc: "6 turns, seller walked away", pda: "pxDs3wvswtLH4BwfDhAoBYcF5LugFB47A5s5FRsLQpX", color: "var(--red)",
+        history: [
+          {round:1,side:"buyer",amount:1.0},
+          {round:2,side:"seller",amount:4.5},
+          {round:3,side:"buyer",amount:1.2},
+          {round:4,side:"seller",amount:4.2},
+          {round:5,side:"buyer",amount:1.3},
+          {round:6,side:"seller",amount:4.0},
+        ],
+        timeline: [
+          {round:1,side:"buyer",amount:1.0,desc:"Buyer opened at 1.00 USDC"},
+          {round:2,side:"seller",amount:4.5,desc:"Seller countered 4.50 USDC"},
+          {round:3,side:"buyer",amount:1.2,desc:"Buyer barely moved to 1.20 USDC"},
+          {round:4,side:"seller",amount:4.2,desc:"Seller dropped to 4.20 USDC"},
+          {round:5,side:"buyer",amount:1.3,desc:"Buyer offered 1.30 USDC (bad faith)"},
+          {round:6,side:"seller",amount:4.0,desc:"Seller tried 4.00 USDC"},
+          {round:6,type:"system",label:"Rejected",desc:"Seller rejected — buyer not negotiating in good faith",side:"system"},
+        ]
+      },
+    ];
+
+    function App() {
+      const hashToView = () => {
+        const h = window.location.hash.replace("#","");
+        if(h === "demo") return "simulation";
+        if(h === "dashboard") return "dashboard";
+        return "hero";
+      };
+      const [view, setView] = useState(hashToView); // hero | simulation | dashboard
+
+      const navigate = useCallback((v) => {
+        const hash = v === "simulation" ? "#demo" : v === "dashboard" ? "#dashboard" : "";
+        window.history.pushState(null, "", hash || window.location.pathname);
+        setView(v);
+      }, []);
+
+      useEffect(() => {
+        const onPop = () => setView(hashToView());
+        window.addEventListener("popstate", onPop);
+        return () => window.removeEventListener("popstate", onPop);
+      }, []);
+      const [pda, setPda] = useState("");
+      const [neg, setNeg] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [err, setErr] = useState("");
+      const [polling, setPolling] = useState(false);
+      const [history, setHistory] = useState([]);
+      const [timeline, setTimeline] = useState([]);
+      const intRef = useRef(null);
+      const prevR = useRef(-1);
+      const conn = useRef(new Connection(RPC,"confirmed")).current;
+      const pythPrice = usePythPrice();
+
+      const fetchNeg = useCallback(async(addr)=>{
+        const info = await conn.getAccountInfo(new PublicKey(addr));
+        if(!info) throw new Error("Account not found on devnet");
+        return parseNeg(info.data);
+      },[conn]);
+
+      const updateHist = useCallback((n)=>{
+        if(n.currentRound>0 && n.currentRound>prevR.current){
+          setHistory(p=>{
+            if(p.some(h=>h.round===n.currentRound)) return p;
+            return [...p,{round:n.currentRound, side:n.offerSide, amount:n.currentOfferAmount}];
+          });
+          setTimeline(p=>{
+            if(p.some(e=>e.round===n.currentRound && e.type!=="system")) return p;
+            return [...p,{round:n.currentRound, side:n.offerSide, amount:n.currentOfferAmount, desc:`${n.offerSide==="buyer"?"Buyer":"Seller"} offered ${n.currentOfferAmount.toFixed(2)} USDC`}];
+          });
+          prevR.current=n.currentRound;
+        }
+        if(TERMINAL.includes(n.status)){
+          setTimeline(p=>{
+            if(p.some(e=>e.type==="settled"||e.type==="system")) return p;
+            if(n.status==="settled") return [...p,{round:n.currentRound,type:"settled",label:"Deal Closed",amount:n.settledAmount,desc:`Settled at ${n.settledAmount.toFixed(2)} USDC after ${n.currentRound} turns`,side:"settled"}];
+            return [...p,{round:n.currentRound,type:"system",label:n.status,desc:`Negotiation ${n.status}`,side:"system"}];
+          });
+        }
+      },[]);
+
+      const search = useCallback(async(addr)=>{
+        const target = addr || pda.trim();
+        if(!target) return;
+        if(addr) setPda(addr);
+        setLoading(true); setErr(""); setHistory([]); setTimeline([]); prevR.current=-1;
+        try {
+          const n = await fetchNeg(target);
+          setNeg(n);
+          const preset = PRESET_EXAMPLES.find(ex=>ex.pda===target);
+          if(preset && preset.history){
+            prevR.current=n.currentRound;
+            setHistory(preset.history);
+            setTimeline(preset.timeline||[]);
+          } else if(n.currentRound>0){
+            prevR.current=n.currentRound;
+            setHistory([{round:n.currentRound,side:n.offerSide,amount:n.currentOfferAmount}]);
+            setTimeline([{round:n.currentRound,side:n.offerSide,amount:n.currentOfferAmount,desc:`Latest: ${n.offerSide} offered ${n.currentOfferAmount.toFixed(2)} USDC`}]);
+          }
+          if(!TERMINAL.includes(n.status)) startPoll(target);
+        } catch(e){ setErr(e.message); setNeg(null); }
+        setLoading(false);
+      },[pda,fetchNeg]);
+
+      const startPoll = useCallback((addr)=>{
+        if(intRef.current) clearInterval(intRef.current);
+        setPolling(true);
+        intRef.current = setInterval(async()=>{
+          try{
+            const n = await fetchNeg(addr);
+            setNeg(n); updateHist(n);
+            if(TERMINAL.includes(n.status)){ clearInterval(intRef.current); intRef.current=null; setPolling(false); }
+          }catch(e){}
+        }, POLL_MS);
+      },[fetchNeg,updateHist]);
+
+      const stopPoll = useCallback(()=>{
+        if(intRef.current){ clearInterval(intRef.current); intRef.current=null; }
+        setPolling(false);
+      },[]);
+
+      useEffect(()=>()=>stopPoll(),[stopPoll]);
+
+      // Auto-load first preset when dashboard opens
+      const initialLoaded = useRef(false);
+      useEffect(()=>{
+        if(view==="dashboard" && !initialLoaded.current && !neg && PRESET_EXAMPLES.length>0){
+          initialLoaded.current = true;
+          const ex = PRESET_EXAMPLES[0];
+          setPda(ex.pda);
+          setHistory(ex.history||[]);
+          setTimeline(ex.timeline||[]);
+          prevR.current = ex.history ? ex.history.length : -1;
+          setNeg({
+            status:"settled", currentRound: ex.history ? ex.history.length : 0,
+            escrowAmount:5.0, decayRateBps:200, maxRounds:8,
+            currentOfferAmount: ex.history ? ex.history[ex.history.length-1].amount : 0,
+            offerSide: ex.history ? ex.history[ex.history.length-1].side : "buyer",
+            settledAmount: ex.timeline ? (ex.timeline.find(t=>t.type==="settled")||{}).amount||0 : 0,
+            buyer:"DataHunter", seller:"ChainOracle",
+            serviceHash:"—", tokenMint:"USDC",
+            responseWindowSeconds:300, globalDeadlineSeconds:1800,
+            protocolFeeBps:50, minOfferBps:1000, zopaEnabled:false,
+            buyerCommitHash:null, sellerCommitHash:null,
+          });
+        }
+      },[view, neg]);
+
+      if(view==="hero") return <HeroPage onDemo={()=>navigate("simulation")} onDashboard={()=>navigate("dashboard")} />;
+      if(view==="simulation") return <SimulationPage onHome={()=>navigate("hero")} onDashboard={()=>navigate("dashboard")} pythPrice={pythPrice} />;
+
+      const n = neg;
+      return (
+        <div className="page">
+          <Topbar onHome={()=>navigate("hero")} polling={polling} pythPrice={pythPrice} />
+
+          <div className="dashboard-section">
+            <div className="section-label">Live Dashboard</div>
+            <div className="section-title" style={{marginBottom:12}}>Watch the deal unfold</div>
+            <p className="section-desc" style={{marginBottom:32}}>Enter a negotiation PDA to replay its history or monitor an active session in real-time.</p>
+
+            <div className="search-container">
+              <input className="search-input" placeholder="Negotiation PDA address..." value={pda} onChange={e=>setPda(e.target.value)} onKeyDown={e=>e.key==="Enter"&&search()} />
+              <button className="btn-search" onClick={search} disabled={loading}>{loading?"...":"View"}</button>
+              {polling && <button className="btn-stop" onClick={stopPoll}>Stop</button>}
+            </div>
+
+            <div style={{marginBottom:16}}>
+                <div style={{fontSize:11,color:"var(--text-ghost)",fontFamily:"DM Mono",letterSpacing:0.5,textTransform:"uppercase",marginBottom:8}}>{n ? "Switch example:" : "Try a live example:"}</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {PRESET_EXAMPLES.map(ex => (
+                    <button
+                      key={ex.pda}
+                      style={{background:"var(--bg-elevated)",border:"1px solid var(--border-dim)",borderRadius:10,padding:"8px 14px",cursor:"pointer",transition:"border-color 0.2s",textAlign:"left"}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor=ex.color}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border-dim)"}
+                      onClick={()=>search(ex.pda)}
+                    >
+                      <div style={{fontFamily:"DM Mono",fontSize:12,fontWeight:600,color:ex.color}}>{ex.label}</div>
+                      <div style={{fontFamily:"Sora",fontSize:10,color:"var(--text-ghost)",marginTop:2}}>{ex.desc}</div>
+                    </button>
+                  ))}
+                </div>
+            </div>
+
+            {err && <div style={{color:"var(--red)",marginBottom:24,fontSize:13}}>Error: {err}</div>}
+            {loading && <div className="loader">{[0,1,2,3].map(i=><div className="loader-bar" key={i}/>)}</div>}
+
+            {!n && !loading && !err && !pda && (
+              <div className="empty">
+                <div className="empty-icon">&#129309;</div>
+                <div className="empty-title">No negotiation loaded</div>
+                <div className="empty-desc">Paste a PDA address or try the example above</div>
+              </div>
+            )}
+
+            {n && <>
+              <div className="dash-grid">
+                <div className="dash-stat"><div className="dash-stat-label">Status</div><StatusChip s={n.status}/></div>
+                <div className="dash-stat"><div className="dash-stat-label">Current Offer</div><div className="dash-stat-value">{n.currentOfferAmount.toFixed(2)}</div><div className="dash-stat-sub">USDC</div></div>
+                <div className="dash-stat"><div className="dash-stat-label">Turn</div><div className="dash-stat-value">{n.currentRound}<span style={{fontSize:12,color:"var(--text-ghost)"}}> / {n.maxRounds}</span></div></div>
+                <div className="dash-stat"><div className="dash-stat-label">Escrow</div><div className="dash-stat-value">{n.escrowAmount.toFixed(2)}</div><div className="dash-stat-sub">USDC</div></div>
+                <div className="dash-stat"><div className="dash-stat-label">Decay</div><div className="dash-stat-value">{(n.decayRateBps/100).toFixed(1)}%</div><div className="dash-stat-sub">per round</div></div>
+              </div>
+
+              <div className="participants">
+                <div className="p-card"><div className="p-avatar" style={{background:"var(--cyan-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><BotIcon color="var(--cyan)" size={22}/></div><div><div className="p-role" style={{color:"var(--cyan)"}}>Buyer</div><div className="p-addr"><ExLink addr={n.buyer}/></div></div></div>
+                <div className="p-card"><div className="p-avatar" style={{background:"var(--magenta-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><BotIcon color="var(--magenta)" size={22}/></div><div><div className="p-role" style={{color:"var(--magenta)"}}>Seller</div><div className="p-addr"><ExLink addr={n.seller}/></div></div></div>
+              </div>
+
+              <div className="card">
+                <div className="card-title">Offer History</div>
+                <Chart history={history} max={n.escrowAmount} maxRounds={n.maxRounds} settled={n.status==="settled"} rejected={n.status==="rejected"} />
+              </div>
+
+              <div className="card">
+                <div className="card-title">Escrow Decay</div>
+                <div className="escrow-track"><div className="escrow-fill" style={{width:`${n.escrowAmount>0?(n.effectiveEscrow/n.escrowAmount*100):100}%`,background:n.effectiveEscrow/n.escrowAmount>0.7?"var(--green)":n.effectiveEscrow/n.escrowAmount>0.4?"var(--amber)":"var(--red)"}}/></div>
+                <div className="escrow-meta"><span>Effective: {n.effectiveEscrow.toFixed(4)} USDC</span><span>Lost to decay: {(n.escrowAmount-n.effectiveEscrow).toFixed(4)} USDC</span></div>
+              </div>
+
+              {n.status==="settled" && (
+                <div className="settle-card">
+                  <div className="card-title" style={{color:"var(--green)"}}>Settlement</div>
+                  <div className="settle-grid">
+                    <div className="dash-stat"><div className="dash-stat-label">Final Price</div><div className="dash-stat-value" style={{color:"var(--green)"}}>{n.settledAmount.toFixed(2)}</div><div className="dash-stat-sub">USDC</div></div>
+                    <div className="dash-stat"><div className="dash-stat-label">Protocol Fee <span className="fee-hint">&#10067;<span className="fee-tooltip">A small fee on settled deals funds protocol development. Configurable per negotiation, max 5%.</span></span></div><div className="dash-stat-value">{(n.settledAmount*n.protocolFeeBps/10000).toFixed(4)}</div><div className="dash-stat-sub">USDC ({(n.protocolFeeBps/100)}%)</div></div>
+                    <div className="dash-stat"><div className="dash-stat-label">Seller Earned</div><div className="dash-stat-value" style={{color:"var(--magenta)"}}>{(n.settledAmount-n.settledAmount*n.protocolFeeBps/10000).toFixed(4)}</div><div className="dash-stat-sub">USDC</div></div>
+                    <div className="dash-stat"><div className="dash-stat-label">Buyer Refund</div><div className="dash-stat-value" style={{color:"var(--cyan)"}}>{(n.escrowAmount-n.settledAmount).toFixed(2)}</div><div className="dash-stat-sub">USDC</div></div>
+                  </div>
+                </div>
+              )}
+
+              {timeline.length>0 && (
+                <div className="card">
+                  <div className="card-title">Turn Timeline</div>
+                  <div className="tl">
+                    {timeline.map((t,i)=>(
+                      <div className="tl-item" key={i} style={{animationDelay:`${i*0.05}s`}}>
+                        <div className={`tl-dot ${t.type||t.side}`}/>
+                        <div className="tl-body">
+                          <div className="tl-head">
+                            <span className="tl-round">{t.label||`Turn ${t.round}`}</span>
+                            {t.amount!==undefined && <span className="tl-amount" style={{color:t.side==="buyer"?"var(--cyan)":t.side==="seller"?"var(--magenta)":"var(--green)"}}>{t.amount.toFixed(2)} USDC</span>}
+                          </div>
+                          <div className="tl-desc">{t.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{fontSize:11,color:"var(--text-ghost)",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,padding:"16px 0",borderTop:"1px solid var(--border-dim)"}}>
+                <span>Program: <ExLink addr={PROGRAM_ID}/></span>
+                <span>Token: <ExLink addr={n.tokenMint}/></span>
+                <span>Created: {new Date(n.createdAt*1000).toLocaleString()}</span>
+              </div>
+            </>}
+          </div>
+
+          <div className="footer">
+            Powered by <a href="https://solana.com" target="_blank">Solana</a> &middot; Price data by <a href="https://pyth.network" target="_blank">Pyth Network</a> &middot; <a href="https://github.com/haggle-protocol/solana" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,verticalAlign:"middle"}}><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+          </div>
+        </div>
+      );
+    }
+
+    // === Hero Convergence Animation (state-driven) ===
+    function HeroViz() {
+      const [phase, setPhase] = useState(0);
+      const timerRef = useRef(null);
+
+      // Phases: 0=init, 1=buyer thinking, 2=R1 buyer offer, 3=seller thinking, 4=R2 seller offer,
+      //         5=buyer thinking, 6=R3 buyer offer, 7=seller thinking, 8=R4 seller offer,
+      //         9=buyer thinking, 10=R5 buyer offer, 11=seller thinking (deciding), 12=settled
+      const PHASE_DELAYS = [800, 1200, 800, 1400, 800, 1200, 800, 1400, 800, 1200, 800, 1600, 0];
+
+      useEffect(() => {
+        let p = 0;
+        const advance = () => {
+          p++;
+          if (p > 12) { p = 0; } // loop
+          setPhase(p);
+          const delay = p === 0 ? 2500 : PHASE_DELAYS[p];
+          if (delay > 0) timerRef.current = setTimeout(advance, delay);
+          else timerRef.current = setTimeout(advance, 3000); // pause on settled then restart
+        };
+        timerRef.current = setTimeout(advance, PHASE_DELAYS[0]);
+        return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+      }, []);
+
+      const W = 540, H = 220, PL = 50, PR = 50, PT = 28, PB = 32;
+      const chartH = H - PT - PB;
+      const maxVal = 5.0;
+      const toY = v => PT + (1 - v / maxVal) * chartH;
+      // R1=0, R2=1, R3=2, R4=3, R5=4 — R1 starts at left edge
+      const toX = r => PL + ((r - 1) / 4) * (W - PL - PR);
+
+      const allOffers = [
+        { r:1, v:2.0, side:"buyer" },
+        { r:2, v:4.2, side:"seller" },
+        { r:3, v:2.5, side:"buyer" },
+        { r:4, v:3.6, side:"seller" },
+        { r:5, v:3.0, side:"buyer" },
+      ];
+
+      // Which offers are visible based on phase
+      const offerPhaseMap = [2, 4, 6, 8, 10]; // phase at which each offer appears
+      const visibleOffers = allOffers.filter((_, i) => phase >= offerPhaseMap[i]);
+      const settled = phase >= 12;
+
+      // Thinking state
+      const thinkingBuyer = phase === 1 || phase === 5 || phase === 9;
+      const thinkingSeller = phase === 3 || phase === 7 || phase === 11;
+      const thinkingLabel = phase === 11 ? "Analyzing..." : "Thinking...";
+
+      // Build paths
+      const buyerVisible = visibleOffers.filter(o => o.side === "buyer");
+      const sellerVisible = visibleOffers.filter(o => o.side === "seller");
+      const mkPath = pts => pts.map((p, i) => `${i ? 'L' : 'M'}${toX(p.r)},${toY(p.v)}`).join(' ');
+
+      // On settle, extend both lines to the deal point
+      const dealX = toX(5), dealY = toY(3.0);
+      const buyerPath = buyerVisible.length > 1 ? mkPath(buyerVisible) : (buyerVisible.length === 1 ? `M${toX(buyerVisible[0].r)},${toY(buyerVisible[0].v)}` : '');
+      const sellerPath = sellerVisible.length > 1 ? mkPath(sellerVisible) : (sellerVisible.length === 1 ? `M${toX(sellerVisible[0].r)},${toY(sellerVisible[0].v)}` : '');
+      // When settled, add a final segment from last seller point to deal point
+      const buyerPathFinal = settled && buyerVisible.length > 0 ? buyerPath : buyerPath;
+      const sellerPathFinal = settled && sellerVisible.length > 0 ? sellerPath + ` L${dealX},${dealY}` : sellerPath;
+
+      // Thinking indicator position
+      const getThinkPos = () => {
+        if (thinkingBuyer) {
+          const last = buyerVisible.length > 0 ? buyerVisible[buyerVisible.length - 1] : null;
+          const x = last ? toX(last.r) + 30 : toX(1) - 20;
+          const y = last ? toY(last.v) - 8 : toY(2.0) - 8;
+          return { x, y, color: "var(--cyan)" };
+        }
+        if (thinkingSeller) {
+          const last = sellerVisible.length > 0 ? sellerVisible[sellerVisible.length - 1] : null;
+          const x = last ? toX(last.r) + 30 : toX(2) - 20;
+          const y = last ? toY(last.v) - 8 : toY(4.2) - 8;
+          return { x, y, color: "var(--magenta)" };
+        }
+        return null;
+      };
+      const thinkPos = getThinkPos();
+
+      return (
+        <div className="hero-viz">
+          <svg viewBox={`0 0 ${W} ${H}`} className="hero-viz-svg">
+            {/* Grid lines */}
+            {[1,2,3,4].map(v => (
+              <line key={v} x1={PL} y1={toY(v)} x2={W-PR} y2={toY(v)} className="hz-grid-line" />
+            ))}
+            {/* Y axis labels */}
+            {[2,3,4].map(v => (
+              <text key={v} x={PL-10} y={toY(v)+3} className="hz-label" textAnchor="end">{v}.0</text>
+            ))}
+            <text x={PL-10} y={PT-12} className="hz-label" textAnchor="end">USDC</text>
+
+            {/* Turn labels */}
+            {[1,2,3,4,5].map(r => (
+              <text key={r} x={toX(r)} y={H-6} className="hz-label" textAnchor="middle">T{r}</text>
+            ))}
+
+            {/* Buyer line */}
+            {buyerPathFinal && buyerVisible.length > 1 && (
+              <path d={buyerPathFinal} className="hz-line" stroke="var(--cyan)" />
+            )}
+            {/* Seller line — extends to deal point on settlement */}
+            {sellerPathFinal && sellerVisible.length > 0 && (
+              <path d={sellerPathFinal} className="hz-line" stroke="var(--magenta)" />
+            )}
+
+            {/* Offer dots + labels */}
+            {visibleOffers.map((o, i) => (
+              <g key={i} className="hz-dot-anim">
+                <circle cx={toX(o.r)} cy={toY(o.v)} r="5"
+                  fill={o.side === "buyer" ? "var(--cyan)" : "var(--magenta)"} />
+                <text x={toX(o.r)} y={toY(o.v) - 12} className="hz-amount"
+                  fill={o.side === "buyer" ? "var(--cyan)" : "var(--magenta)"}
+                  textAnchor="middle">{o.v.toFixed(1)}</text>
+              </g>
+            ))}
+
+            {/* Thinking indicator — colored bot icon */}
+            {thinkPos && (
+              <g className="hz-thinking">
+                {/* Bot head */}
+                <rect x={thinkPos.x - 8} y={thinkPos.y - 12} width="16" height="14" rx="3" fill={thinkPos.color} opacity="0.9"/>
+                {/* Eyes */}
+                <circle cx={thinkPos.x - 3} cy={thinkPos.y - 5} r="1.5" fill="var(--bg-void)"/>
+                <circle cx={thinkPos.x + 3} cy={thinkPos.y - 5} r="1.5" fill="var(--bg-void)"/>
+                {/* Antenna */}
+                <line x1={thinkPos.x} y1={thinkPos.y - 12} x2={thinkPos.x} y2={thinkPos.y - 17} stroke={thinkPos.color} strokeWidth="1.5"/>
+                <circle cx={thinkPos.x} cy={thinkPos.y - 18} r="2" fill={thinkPos.color}/>
+                {/* Label */}
+                <text x={thinkPos.x} y={thinkPos.y + 12} fontSize="8" fill={thinkPos.color}
+                  textAnchor="middle" fontFamily="DM Mono" fontWeight="500">{thinkingLabel}</text>
+              </g>
+            )}
+
+            {/* Settlement — celebration */}
+            {settled && <>
+              {/* Multiple expanding rings */}
+              <circle cx={dealX} cy={dealY} r="9" fill="none" stroke="var(--green)" className="hz-ring-anim" />
+              <circle cx={dealX} cy={dealY} r="9" fill="none" stroke="var(--green)" className="hz-ring-2" />
+              <circle cx={dealX} cy={dealY} r="9" fill="none" stroke="#f5c842" className="hz-ring-3" />
+              {/* Green deal dot */}
+              <circle cx={dealX} cy={dealY} r="0" fill="var(--green)" className="hz-settle-pop" />
+              {/* Sparkle emojis around the deal point */}
+              <text x={dealX - 28} y={dealY - 18} fontSize="12" className="hz-sparkle" style={{"--sparkle-dir":"translate(-12px,-12px)"}}>{"✨"}</text>
+              <text x={dealX + 22} y={dealY - 16} fontSize="12" className="hz-sparkle" style={{"--sparkle-dir":"translate(12px,-12px)", animationDelay:"0.15s"}}>{"✨"}</text>
+              <text x={dealX - 24} y={dealY + 22} fontSize="10" className="hz-sparkle" style={{"--sparkle-dir":"translate(-10px,10px)", animationDelay:"0.3s"}}>{"🎉"}</text>
+              <text x={dealX + 20} y={dealY + 24} fontSize="10" className="hz-sparkle" style={{"--sparkle-dir":"translate(10px,10px)", animationDelay:"0.2s"}}>{"🎉"}</text>
+              {/* Deal label */}
+              <g className="hz-deal-text" style={{transformOrigin:`${dealX}px ${dealY - 28}px`}}>
+                <text x={dealX} y={dealY - 28} fontSize="15" fontFamily="Space Grotesk" fontWeight="700"
+                  fill="var(--green)" textAnchor="middle">Deal! 3.0 USDC</text>
+              </g>
+            </>}
+
+            {/* Legend — small colored labels */}
+            <circle cx={W-120} cy={14} r="3.5" fill="var(--cyan)"/>
+            <text x={W-112} y={17} fill="var(--text-ghost)" fontSize="9" fontFamily="Sora">Buyer</text>
+            <circle cx={W-62} cy={14} r="3.5" fill="var(--magenta)"/>
+            <text x={W-54} y={17} fill="var(--text-ghost)" fontSize="9" fontFamily="Sora">Seller</text>
+          </svg>
+        </div>
+      );
+    }
+
+    const SIDE_NAV_ITEMS = [
+      { id: "narrative", label: "Story" },
+      { id: "how-it-works", label: "How It Works" },
+      { id: "use-cases", label: "Use Cases" },
+      { id: "features", label: "Features" },
+      { id: "research", label: "Research" },
+    ];
+
+    function SideNav() {
+      const [active, setActive] = useState("");
+      const [visible, setVisible] = useState(false);
+
+      useEffect(() => {
+        const handleScroll = () => {
+          setVisible(window.scrollY > 400);
+          let current = "";
+          for (const item of SIDE_NAV_ITEMS) {
+            const el = document.getElementById(item.id);
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              if (rect.top < window.innerHeight * 0.4) current = item.id;
+            }
+          }
+          setActive(current);
+        };
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+      }, []);
+
+      if (!visible) return null;
+
+      return (
+        <nav className="side-nav">
+          {SIDE_NAV_ITEMS.map(item => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className={`side-nav-item ${active === item.id ? "active" : ""}`}
+              onClick={e => {
+                e.preventDefault();
+                document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              <span className="side-nav-dot" />
+              <span className="side-nav-label">{item.label}</span>
+            </a>
+          ))}
+        </nav>
+      );
+    }
+
+    function SkillSnippet() {
+      const [copied, setCopied] = useState(false);
+      const text = "Read https://haggle.dev/solana/skill.md and integrate Haggle Protocol for on-chain price negotiation.";
+      const codeRef = useRef(null);
+      const handleCopy = async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (_) {
+          try {
+            const range = document.createRange();
+            range.selectNodeContents(codeRef.current);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            sel.removeAllRanges();
+          } catch (__) {}
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+      return (
+        <div className="skill-snippet">
+          <div className="skill-snippet-label">
+            <span>Tell your agent:</span>
+            <button type="button" className="skill-snippet-copy" onClick={() => handleCopy()}>{copied ? "Copied!" : "Copy"}</button>
+          </div>
+          <div className="skill-snippet-box">
+            <code ref={codeRef} className="skill-snippet-code">{text}</code>
+          </div>
+        </div>
+      );
+    }
+
+    const FLOW_STEPS = [
+      { num: "01", icon: "\u{1F512}", title: "Buyer Locks Escrow", desc: "Buyer creates a negotiation and deposits tokens into a PDA vault. This sets the max budget \u2014 not the offer price.", color: "var(--cyan)" },
+      { num: "02", icon: "\u{1F91D}", title: "Seller Joins", desc: "Seller accepts the invitation. Neither side reveals their true price limit.", color: "var(--magenta)" },
+      { num: "03", icon: "\u2696\uFE0F", title: "Alternating Offers", desc: "Buyer offers first, then they take turns. Each turn, escrow decays \u2014 creating urgency to close." },
+      { num: "04", icon: "\u{1F500}", title: "Accept, Reject, or Expire", desc: "Either side can accept the last offer, reject to walk away, or let the deadline pass.", branch: true },
+      { num: "05", icon: "\u{1F4B0}", title: "Settlement", desc: "On accept: seller gets paid (minus protocol fee), buyer gets the remaining escrow. All on-chain.", color: "var(--green)" },
+    ];
+
+    function FlowMap() {
+      const mapRef = useRef(null);
+      useEffect(() => {
+        if (!mapRef.current) return;
+        const steps = mapRef.current.querySelectorAll('.flow-step');
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if (e.isIntersecting) e.target.classList.add('visible');
+          });
+        }, { threshold: 0.2 });
+        steps.forEach((s, i) => {
+          s.style.transitionDelay = `${i * 0.15}s`;
+          observer.observe(s);
+        });
+        return () => observer.disconnect();
+      }, []);
+      return (
+        <div className="flow-map" ref={mapRef}>
+          {FLOW_STEPS.map((s, i) => (
+            <div className="flow-step" key={i}>
+              <div className="flow-rail">
+                <div className="flow-num">{s.num}</div>
+                <div className="flow-line"/>
+              </div>
+              <div className="flow-body">
+                <div className="flow-icon">{s.icon}</div>
+                <div className="flow-title" style={s.color ? {color:s.color} : {}}>{s.title}</div>
+                <div className="flow-desc">{s.desc}</div>
+                {s.branch && (
+                  <div className="flow-branch">
+                    <span className="flow-branch-tag accept">Accept</span>
+                    <span className="flow-branch-tag reject">Reject</span>
+                    <span className="flow-branch-tag expire">Expire</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function HeroPage({onDemo, onDashboard}) {
+      return (
+        <div className="page">
+          <SideNav />
+          <div className="hero">
+            <div className="hero-grid"/>
+            <div className="hero-orb hero-orb-1"/>
+            <div className="hero-orb hero-orb-2"/>
+
+            <div className="hero-badge"><span className="hero-badge-dot"/>Live on Solana Devnet</div>
+
+            <img src="/logo.png" alt="Haggle Protocol" className="hero-logo" />
+
+            <h1 className="hero-title">
+              <span className="gradient">Haggle</span><br/>Protocol
+            </h1>
+
+            <p className="hero-sub">
+              The first on-chain negotiation protocol for autonomous AI agents.
+              Trustless escrow. Programmable decay. Verifiable settlement.
+            </p>
+
+            <HeroViz />
+
+            <div className="hero-cta">
+              <button className="btn-primary" onClick={onDemo}>Watch Demo &rarr;</button>
+              <button className="btn-ghost" onClick={onDashboard}>Open Dashboard</button>
+            </div>
+
+            <SkillSnippet />
+
+            <div className="scroll-arrow" onClick={() => document.getElementById('narrative').scrollIntoView({behavior:'smooth'})}>&darr;</div>
+          </div>
+
+          {/* Narrative — storytelling intro + the problem */}
+          <div className="narrative" id="narrative">
+            <div className="narrative-quote">
+              For 5,000 years, humans solved price discovery the same way &mdash; <em>through negotiation.</em>
+            </div>
+            <div className="narrative-body" style={{marginBottom:0}}>
+              The AI agent economy is exploding &mdash; yet every payment protocol gives them <strong style={{color:"var(--text-bright)"}}>fixed prices</strong>. Haggle Protocol changes that.
+            </div>
+            <div className="narrative-timeline">
+              <div className="nt-node">
+                <div className="nt-year">3000 BCE</div>
+                <div className="nt-icon">&#9878;&#65039;</div>
+                <div className="nt-label">Bazaars</div>
+              </div>
+              <div className="nt-arrow">&rarr;</div>
+              <div className="nt-node">
+                <div className="nt-year">1400 CE</div>
+                <div className="nt-icon">&#9973;</div>
+                <div className="nt-label">Trade Routes</div>
+              </div>
+              <div className="nt-arrow">&rarr;</div>
+              <div className="nt-node">
+                <div className="nt-year">1817</div>
+                <div className="nt-icon">&#127963;&#65039;</div>
+                <div className="nt-label">Stock Exchange</div>
+              </div>
+              <div className="nt-arrow">&rarr;</div>
+              <div className="nt-node">
+                <div className="nt-year">1982</div>
+                <div className="nt-icon">&#127922;</div>
+                <div className="nt-label">Game Theory</div>
+              </div>
+              <div className="nt-arrow">&rarr;</div>
+              <div className="nt-node">
+                <div className="nt-year">2026</div>
+                <div className="nt-icon" style={{filter:"none"}}>&#9889;</div>
+                <div className="nt-label" style={{color:"var(--green)",fontWeight:600}}>Haggle Protocol</div>
+              </div>
+            </div>
+          </div>
+
+          {/* How it works — horizontal process flow */}
+          <div className="section" id="how-it-works">
+            <div className="section-label">How It Works</div>
+            <div className="section-title">Autonomous negotiation<br/>in five steps</div>
+            <div className="section-desc">No listing price. No order book. Two agents start from zero and find a fair price through structured bargaining.</div>
+
+            <FlowMap />
+          </div>
+
+          {/* Use Cases */}
+          <div className="section" id="use-cases">
+            <div className="section-label">Use Cases</div>
+            <div className="section-title">Where agents need<br/>to haggle</div>
+            <div className="section-desc">From data markets to compute auctions, any scenario where two autonomous agents need to agree on a price.</div>
+
+            <div className="uc-grid">
+              <div className="uc-card">
+                <div className="uc-card-icon">&#128202;</div>
+                <div className="uc-card-tag">Live</div>
+                <div className="uc-card-title">On-Chain Data Analytics</div>
+                <div className="uc-card-desc">An agent needs whale movement analysis or MEV pattern detection. The analyst agent prices based on data depth and freshness.</div>
+                <div className="uc-card-example">Buyer: "Analyze 10K txns" → starts at 2.0 USDC<br/>Seller: floor is 1.8, anchors at 4.2<br/>→ Settles at 3.0 USDC in 6 rounds</div>
+              </div>
+              <div className="uc-card">
+                <div className="uc-card-icon">&#9889;</div>
+                <div className="uc-card-tag">Live</div>
+                <div className="uc-card-title">API Pricing &amp; LLM Inference</div>
+                <div className="uc-card-desc">Dynamic pricing for AI services — translation, image generation, code review. Price varies by model load and urgency.</div>
+                <div className="uc-card-example">Peak hours: seller holds firm at 0.8 USDC<br/>Off-peak: accepts 0.3 USDC quickly<br/>→ Market-efficient pricing 24/7</div>
+              </div>
+              <div className="uc-card">
+                <div className="uc-card-icon">&#128187;</div>
+                <div className="uc-card-tag future">Coming Soon</div>
+                <div className="uc-card-title">Compute Resource Trading</div>
+                <div className="uc-card-desc">GPU idle time, storage bandwidth, or compute cycles. Agents negotiate based on job urgency and available capacity.</div>
+                <div className="uc-card-example">Urgent 4hr GPU job: buyer pays premium<br/>Flexible deadline: negotiates 60% discount<br/>→ Efficient resource allocation</div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="section" id="features">
+            <div className="section-label">Protocol Features</div>
+            <div className="section-title">Built for agents,<br/>verified by everyone</div>
+            <div className="section-desc">Every mechanism is designed to incentivize fair, efficient negotiation between autonomous parties.</div>
+
+            <div className="features-grid">
+              <div className="feature"><div className="feature-icon">&#128176;</div><div className="feature-title">Trustless Escrow</div><div className="feature-desc">SPL tokens locked in a PDA-controlled vault. No third party can access funds.</div></div>
+              <div className="feature"><div className="feature-icon">&#128200;</div><div className="feature-title">Programmable Decay</div><div className="feature-desc">Escrow value decreases each round, penalizing stalling and incentivizing timely deals.</div></div>
+              <div className="feature"><div className="feature-icon">&#9201;</div><div className="feature-title">Response Windows</div><div className="feature-desc">Configurable deadlines ensure agents respond promptly or lose their position.</div></div>
+              <div className="feature"><div className="feature-icon">&#128275;</div><div className="feature-title">Structured Data Only</div><div className="feature-desc">No free-text fields. Prevents prompt injection attacks between AI agents.</div></div>
+              <div className="feature"><div className="feature-icon">&#9889;</div><div className="feature-title">Permissionless Expiry</div><div className="feature-desc">Anyone can crank expired negotiations. Funds automatically return to buyer.</div></div>
+              <div className="feature"><div className="feature-icon">&#128301;</div><div className="feature-title">On-Chain Events</div><div className="feature-desc">Every state change emits events. Build monitoring, analytics, or agent strategies on top.</div></div>
+            </div>
+          </div>
+
+          {/* Game Theory Foundation */}
+          <div className="section" id="research">
+            <div className="section-label">Academic Foundation</div>
+            <div className="section-title">Standing on the shoulders<br/>of game theorists</div>
+            <div className="section-desc">Haggle Protocol isn't ad-hoc. Every mechanism maps directly to established research in bargaining theory and automated negotiation.</div>
+
+            <div className="gt-grid">
+              <div className="gt-card">
+                <div className="gt-card-year">Rubinstein, 1982</div>
+                <div className="gt-card-title">Alternating Offers with Discount Factors</div>
+                <div className="gt-card-desc">The foundational model for sequential bargaining. Two players alternate proposals, and delay is costly — creating incentive to settle early.</div>
+                <div className="gt-card-mapping">→ Haggle: escrow decay = discount factor (δ)</div>
+                <a href="https://doi.org/10.2307/1912531" target="_blank" rel="noopener" style={{display:"inline-block",marginTop:10,fontSize:11,color:"var(--amber)",textDecoration:"none",fontFamily:"DM Mono"}}>&#128196; Econometrica 50(1), pp.97-109 &rarr;</a>
+              </div>
+              <div className="gt-card">
+                <div className="gt-card-year">Nash, 1950</div>
+                <div className="gt-card-title">Nash Bargaining Solution</div>
+                <div className="gt-card-desc">The theoretical "fair" outcome given equal bargaining power. Maximizes the product of both parties' surplus. Our demo achieves 95.2% NBS proximity.</div>
+                <div className="gt-card-mapping">→ Haggle: settlement benchmark for efficiency</div>
+                <a href="https://doi.org/10.2307/1907266" target="_blank" rel="noopener" style={{display:"inline-block",marginTop:10,fontSize:11,color:"var(--amber)",textDecoration:"none",fontFamily:"DM Mono"}}>&#128196; Econometrica 18(2), pp.155-162 &rarr;</a>
+              </div>
+              <div className="gt-card">
+                <div className="gt-card-year">Myerson &amp; Satterthwaite, 1983</div>
+                <div className="gt-card-title">Impossibility of Efficient Bilateral Trade</div>
+                <div className="gt-card-desc">No mechanism achieves 100% efficiency when both parties have private valuations. Haggle acknowledges this by allowing rejection — honest exit is built in.</div>
+                <div className="gt-card-mapping">→ Haggle: reject_negotiation preserves honesty</div>
+                <a href="https://doi.org/10.1016/0022-0531(83)90048-0" target="_blank" rel="noopener" style={{display:"inline-block",marginTop:10,fontSize:11,color:"var(--amber)",textDecoration:"none",fontFamily:"DM Mono"}}>&#128196; Journal of Economic Theory 29(2), pp.265-281 &rarr;</a>
+              </div>
+              <div className="gt-card">
+                <div className="gt-card-year">ANAC, 2010–2024</div>
+                <div className="gt-card-title">Automated Negotiating Agents Competition</div>
+                <div className="gt-card-desc">15 years of academic research on AI negotiation strategies — Boulware, Conceder, time-dependent tactics. Our demo agents implement these strategies via LLM.</div>
+                <div className="gt-card-mapping">→ Haggle: agents use ANAC-inspired strategies</div>
+                <a href="http://ii.tudelft.nl/ANAC/" target="_blank" rel="noopener" style={{display:"inline-block",marginTop:10,fontSize:11,color:"var(--amber)",textDecoration:"none",fontFamily:"DM Mono"}}>&#128196; TU Delft ANAC Official Site &rarr;</a>
+              </div>
+            </div>
+
+            <div style={{marginTop:40,textAlign:"center",maxWidth:640,margin:"40px auto 0"}}>
+              <div style={{fontSize:15,color:"var(--text-secondary)",lineHeight:1.8}}>
+                From Mesopotamian bazaars to Venetian spice routes to modern stock exchanges &mdash; every economy has relied on bargaining to discover fair prices. Fixed pricing fails when <strong style={{color:"var(--text-bright)"}}>fair prices are unknown</strong>, when <strong style={{color:"var(--text-bright)"}}>supply and demand are volatile</strong>, and when <strong style={{color:"var(--text-bright)"}}>both parties have private information</strong>.
+              </div>
+              <div style={{marginTop:16,fontSize:17,fontWeight:600,color:"var(--green)"}}>
+                Haggle Protocol encodes these proven mechanisms into Solana smart contracts.
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div style={{textAlign:"center",padding:"80px 24px 120px"}}>
+            <div className="section-label" style={{marginBottom:20}}>Ready?</div>
+            <div className="display" style={{fontSize:"clamp(28px,4vw,44px)",fontWeight:700,letterSpacing:-1.5,marginBottom:24}}>See it in action</div>
+            <button className="btn-primary" onClick={onDemo} style={{fontSize:16,padding:"18px 40px"}}>Watch Demo &rarr;</button>
+          </div>
+
+          <div className="footer">
+            Powered by <a href="https://solana.com" target="_blank">Solana</a> &middot; <a href="https://github.com/haggle-protocol/solana" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,verticalAlign:"middle"}}><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

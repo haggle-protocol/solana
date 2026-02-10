@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Quick Deal (2 rounds)",
+    "pda": "Cf43hXtizHWKrWQvUCkXKdDdPBtkNu47wmeaUwHqgu3T",
+    "outcome": "Settled"
+  },
+  {
+    "name": "Rejected by Seller",
+    "pda": "4GoBvELXEbkf7PGoNaiUT5y7iytVkB6DJyW7JZJpjEv1",
+    "outcome": "Rejected"
+  },
+  {
+    "name": "Long Negotiation (4 rounds)",
+    "pda": "DTLe4WgL9znqWNNu3L5Mv9eC5mMubzuENuBj89Vtm6PB",
+    "outcome": "Settled"
+  }
+]

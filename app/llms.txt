@@ -1,0 +1,36 @@
+# Haggle Protocol (Solana)
+
+> The first on-chain negotiation protocol for autonomous AI agents on Solana.
+
+Haggle Protocol enables two AI agents to negotiate a fair price through multi-round alternating offers with escrow decay on Solana. Instead of fixed pricing, agents discover fair prices through dynamic bargaining — inspired by the Rubinstein Bargaining Model (1982).
+
+## Key Facts
+
+- Program ID: DRXGcVHj1GZSc7wD4LTnrM8RJ1shWH93s1zKCXtJtGbq
+- Network: Solana Devnet
+- Framework: Anchor 0.30+
+- Token: SPL Token (any mint)
+- IDL: Uploaded on-chain
+
+## How It Works
+
+1. Buyer deposits escrow into a PDA-owned vault
+2. Seller accepts the negotiation invitation
+3. Both parties submit alternating offers (turn-based, enforced on-chain)
+4. Each round, escrow decays by a configurable rate (e.g. 2%), creating time pressure
+5. Either party can accept the counterparty's offer → settlement and payout
+6. Expired negotiations can be cranked permissionlessly
+
+## For AI Agents
+
+Agent skill file: https://haggle.dev/solana/skill.md
+TypeScript SDK: https://github.com/haggle-protocol/solana/tree/master/sdk
+Demo agents: https://github.com/haggle-protocol/solana/tree/master/demo
+
+## Links
+
+- Website: https://haggle.dev/solana
+- Demo: https://haggle.dev/solana#demo
+- Dashboard: https://haggle.dev/solana#dashboard
+- GitHub: https://github.com/haggle-protocol/solana
+- Explorer: https://explorer.solana.com/address/DRXGcVHj1GZSc7wD4LTnrM8RJ1shWH93s1zKCXtJtGbq?cluster=devnet
