@@ -1523,9 +1523,52 @@
       30% { transform: translateY(-4px); opacity: 1; }
     }
   </style>
+  <!-- Google Analytics (loads after consent) -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', { analytics_storage: 'denied' });
+    function loadGA() {
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Y24K44P4QH';
+      s.async = true;
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', 'G-Y24K44P4QH');
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+    if (localStorage.getItem('cookie-consent') === 'accepted') loadGA();
+  </script>
 </head>
 <body>
   <div id="root"></div>
+
+  <!-- GDPR Cookie Banner -->
+  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#13141c;border-top:1px solid #282a3a;padding:16px 24px;font-family:'Sora',sans-serif;font-size:13px;color:#c8c9d4;backdrop-filter:blur(12px);">
+    <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <span>We use cookies to analyze site usage. <a href="https://haggle.dev/privacy" style="color:#f5a623;text-decoration:none;">Learn more</a></span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="acceptCookies()" style="background:#22e6a0;color:#050508;border:none;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Accept</button>
+        <button onclick="declineCookies()" style="background:transparent;color:#7d7f94;border:1px solid #282a3a;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Decline</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      if (!localStorage.getItem('cookie-consent')) {
+        document.getElementById('cookie-banner').style.display = 'block';
+      }
+    })();
+    function acceptCookies() {
+      localStorage.setItem('cookie-consent', 'accepted');
+      document.getElementById('cookie-banner').style.display = 'none';
+      loadGA();
+    }
+    function declineCookies() {
+      localStorage.setItem('cookie-consent', 'declined');
+      document.getElementById('cookie-banner').style.display = 'none';
+    }
+  </script>
 
   <script type="text/babel">
     const { useState, useEffect, useCallback, useRef } = React;
