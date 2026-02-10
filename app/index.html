@@ -2280,9 +2280,14 @@
           setHistory(ex.history||[]);
           setTimeline(ex.timeline||[]);
           prevR.current = ex.history ? ex.history.length : -1;
+          const rounds = ex.history ? ex.history.length : 0;
+          const escrow = 5.0;
+          const decayBps = 200;
+          const effEscrow = escrow * Math.pow(1 - decayBps/10000, rounds);
           setNeg({
-            status:"settled", currentRound: ex.history ? ex.history.length : 0,
-            escrowAmount:5.0, decayRateBps:200, maxRounds:8,
+            status:"settled", currentRound: rounds,
+            escrowAmount:escrow, decayRateBps:decayBps, maxRounds:8,
+            effectiveEscrow: effEscrow,
             currentOfferAmount: ex.history ? ex.history[ex.history.length-1].amount : 0,
             offerSide: ex.history ? ex.history[ex.history.length-1].side : "buyer",
             settledAmount: ex.timeline ? (ex.timeline.find(t=>t.type==="settled")||{}).amount||0 : 0,
