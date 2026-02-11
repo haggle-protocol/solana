@@ -158,19 +158,17 @@
     }
 
     .hero-logo {
-      position: relative;
-      z-index: 2;
       width: 192px;
       height: 192px;
       border-radius: 50%;
       object-fit: cover;
       margin-bottom: 16px;
       animation: fadeInUp 0.8s both;
+      position: relative;
+      z-index: 2;
     }
 
     .hero-badge {
-      position: relative;
-      z-index: 2;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -184,6 +182,8 @@
       backdrop-filter: blur(12px);
       background: var(--bg-glass);
       animation: fadeIn 0.6s ease;
+      position: relative;
+      z-index: 2;
     }
     .hero-badge-dot {
       width: 6px; height: 6px;
@@ -197,8 +197,6 @@
     }
 
     .hero-title {
-      position: relative;
-      z-index: 2;
       font-family: 'Space Grotesk', sans-serif;
       font-size: clamp(48px, 8vw, 96px);
       font-weight: 700;
@@ -206,6 +204,8 @@
       line-height: 0.95;
       margin-bottom: 24px;
       animation: fadeInUp 0.8s ease;
+      position: relative;
+      z-index: 2;
     }
     .hero-title .gradient {
       background: linear-gradient(135deg, #f5c842, #f5a623, #22e6a0);
@@ -227,13 +227,13 @@
     }
 
     .hero-cta {
-      position: relative;
-      z-index: 2;
       display: flex;
       gap: 16px;
       flex-wrap: wrap;
       justify-content: center;
       animation: fadeInUp 0.8s ease 0.4s both;
+      position: relative;
+      z-index: 2;
     }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -360,12 +360,12 @@
 
     /* Skill snippet — copyable command */
     .skill-snippet {
-      position: relative;
-      z-index: 2;
       margin-top: 24px;
       max-width: 520px;
       margin-left: auto;
       margin-right: auto;
+      position: relative;
+      z-index: 2;
     }
     .skill-snippet-label {
       display: flex;
@@ -1151,50 +1151,128 @@
     }
 
     /* ===== USE CASES ===== */
-    .uc-grid {
+    .uc-split {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-    }
-    .uc-card {
-      background: var(--bg-card);
+      grid-template-columns: 320px 1fr;
+      gap: 0;
       border: 1px solid var(--border-dim);
       border-radius: 16px;
-      padding: 32px 28px;
-      transition: all 0.3s;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    @media (max-width: 768px) {
+      .uc-split { display: none; }
+    }
+    .uc-accordion { display: none; }
+    @media (max-width: 768px) {
+      .uc-accordion { display: block; }
+    }
+    .uc-acc-item {
+      border: 1px solid var(--border-dim);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    .uc-acc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .uc-acc-header:hover { background: #ffffff06; }
+    .uc-acc-item.open .uc-acc-header { border-bottom: 1px solid var(--border-dim); }
+    .uc-acc-item.open .uc-acc-arrow { transform: rotate(180deg); }
+    .uc-acc-arrow {
+      color: var(--text-ghost);
+      font-size: 12px;
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+    .uc-acc-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .uc-acc-item.open .uc-acc-body { max-height: 600px; }
+    .uc-acc-body-inner { padding: 24px 20px; }
+    .uc-list {
+      border-right: 1px solid var(--border-dim);
+    }
+    .uc-list-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-bottom: 1px solid var(--border-dim);
       position: relative;
     }
-    .uc-card:hover { border-color: var(--border-subtle); transform: translateY(-4px); }
-    .uc-card-icon { font-size: 32px; margin-bottom: 16px; }
-    .uc-card-tag {
-      display: inline-block;
+    .uc-list-item:last-child { border-bottom: none; }
+    .uc-list-item:hover { background: #ffffff06; }
+    .uc-list-item.active { background: #22e6a008; }
+    .uc-list-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--green);
+      border-radius: 0 3px 3px 0;
+    }
+    .uc-list-icon { font-size: 24px; flex-shrink: 0; }
+    .uc-list-info { flex: 1; min-width: 0; }
+    .uc-list-title { font-weight: 600; font-size: 14px; color: var(--text-bright); margin-bottom: 3px; }
+    .uc-list-item.active .uc-list-title { color: var(--green); }
+    .uc-list-sub { font-size: 11px; color: var(--text-ghost); font-family: 'DM Mono', monospace; }
+    .uc-list-tag {
       font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      color: var(--green);
-      background: #22e6a010;
-      border: 1px solid #22e6a020;
+      font-size: 9px;
+      padding: 2px 8px;
       border-radius: 100px;
-      padding: 3px 10px;
-      margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      flex-shrink: 0;
     }
-    .uc-card-tag.future {
-      color: var(--amber);
-      background: #f5a62310;
-      border-color: #f5a62320;
+    .uc-list-tag.live { color: var(--green); background: #22e6a010; border: 1px solid #22e6a020; }
+    .uc-list-tag.future { color: var(--amber); background: #f5a62310; border: 1px solid #f5a62320; }
+    .uc-detail {
+      padding: 36px 40px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
     }
-    .uc-card-title { font-weight: 600; font-size: 17px; margin-bottom: 8px; color: var(--text-bright); }
-    .uc-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
-    .uc-card-example {
-      margin-top: 14px;
-      padding: 12px 14px;
-      background: var(--bg-void);
-      border-radius: 10px;
+    @media (max-width: 768px) { .uc-detail { padding: 28px 24px; min-height: auto; } }
+    .uc-detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .uc-detail-icon { font-size: 28px; }
+    .uc-detail-title { font-weight: 600; font-size: 20px; color: var(--text-bright); }
+    .uc-detail-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px; }
+    .uc-detail-divider { height: 1px; background: var(--border-dim); margin-bottom: 24px; }
+    .uc-detail-scenario-label {
       font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      color: var(--text-ghost);
-      line-height: 1.6;
+      font-size: 10px; color: var(--green);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;
+    }
+    .uc-step { display: flex; gap: 14px; margin-bottom: 16px; }
+    .uc-step-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .uc-step-dot {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--border-dim); color: var(--text-bright);
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .uc-step-connector { width: 1px; flex: 1; background: var(--border-dim); margin-top: 4px; }
+    .uc-step:last-child .uc-step-connector { display: none; }
+    .uc-step-content { font-size: 13px; color: var(--text-secondary); line-height: 1.7; padding-bottom: 4px; }
+    .uc-step-content strong { color: var(--text-bright); }
+    .uc-detail-result {
+      margin-top: auto;
+      padding: 14px 18px;
+      background: #22e6a008; border: 1px solid #22e6a018;
+      border-radius: 10px;
+      font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); line-height: 1.6;
     }
 
     /* ===== WHY NOT FIXED ===== */
@@ -1388,23 +1466,23 @@
       .dash-grid { grid-template-columns: repeat(2, 1fr); }
 
       /* Hero */
-      .hero { padding: 30px 16px; }
+      .hero { min-height: auto; padding: 60px 16px 48px; }
       .hero-logo { width: 128px; height: 128px; }
       .hero-title { letter-spacing: -1.5px; }
       .hero-cta { gap: 10px; }
       .hero-cta .btn-primary, .hero-cta .btn-ghost { padding: 14px 24px; font-size: 14px; }
+      .scroll-arrow { display: none; }
 
       /* Narrative */
-      .narrative { padding: 60px 16px 50px; }
+      .narrative { padding: 40px 16px 40px; }
+      .narrative::before { height: 32px; }
       .narrative-body { font-size: 13px; }
 
       /* Section */
       .section { padding: 60px 16px; }
       .section-desc { font-size: 14px; }
 
-      /* Use case cards */
-      .uc-grid { grid-template-columns: 1fr; }
-      .uc-card-example { font-size: 10px; }
+      /* Use case cards — handled by uc-split/uc-accordion media queries */
 
       /* Features */
       .features-grid { grid-template-columns: 1fr; }
@@ -2810,30 +2888,113 @@
             <div className="section-title">Where agents need<br/>to haggle</div>
             <div className="section-desc">From data markets to compute auctions, any scenario where two autonomous agents need to agree on a price.</div>
 
-            <div className="uc-grid">
-              <div className="uc-card">
-                <div className="uc-card-icon">&#128202;</div>
-                <div className="uc-card-tag">Live</div>
-                <div className="uc-card-title">On-Chain Data Analytics</div>
-                <div className="uc-card-desc">An agent needs whale movement analysis or MEV pattern detection. The analyst agent prices based on data depth and freshness.</div>
-                <div className="uc-card-example">Buyer: "Analyze 10K txns" → starts at 2.0 USDC<br/>Seller: floor is 1.8, anchors at 4.2<br/>→ Settles at 3.0 USDC in 6 rounds</div>
-              </div>
-              <div className="uc-card">
-                <div className="uc-card-icon">&#9889;</div>
-                <div className="uc-card-tag">Live</div>
-                <div className="uc-card-title">API Pricing &amp; LLM Inference</div>
-                <div className="uc-card-desc">Dynamic pricing for AI services — translation, image generation, code review. Price varies by model load and urgency.</div>
-                <div className="uc-card-example">Peak hours: seller holds firm at 0.8 USDC<br/>Off-peak: accepts 0.3 USDC quickly<br/>→ Market-efficient pricing 24/7</div>
-              </div>
-              <div className="uc-card">
-                <div className="uc-card-icon">&#128187;</div>
-                <div className="uc-card-tag future">Coming Soon</div>
-                <div className="uc-card-title">Compute Resource Trading</div>
-                <div className="uc-card-desc">GPU idle time, storage bandwidth, or compute cycles. Agents negotiate based on job urgency and available capacity.</div>
-                <div className="uc-card-example">Urgent 4hr GPU job: buyer pays premium<br/>Flexible deadline: negotiates 60% discount<br/>→ Efficient resource allocation</div>
-              </div>
+            {(() => {
+              const UC_DATA = [
+                {
+                  icon: "\u{1F4CA}", tag: "live", title: "On-Chain Data Analytics",
+                  sub: "Whale analysis, MEV detection",
+                  desc: "An agent needs whale movement analysis or MEV pattern detection. The analyst agent prices dynamically based on data depth, freshness, and compute cost.",
+                  scenario: [
+                    <><strong>DeFi trading bot</strong> detects unusual volume on a Raydium pool and needs historical whale wallet analysis within 5 minutes.</>,
+                    <>It discovers <strong>ChainOracle</strong> (analytics agent) via a service registry. ChainOracle's compute cost is ~1.8 USDC but it opens at 4.2 to maximize margin.</>,
+                    <>Over 6 rounds the bot raises from 2.0 while ChainOracle drops from 4.2. Escrow decay pressure pushes both sides to converge.</>,
+                    <>Deal at <strong>3.0 USDC</strong>. ChainOracle delivers the report via IPFS hash embedded in settlement metadata.</>,
+                  ],
+                  result: "3.0 USDC settled in ~12s \u00b7 0.015 fee \u00b7 Both agents profitable",
+                },
+                {
+                  icon: "\u26A1", tag: "live", title: "API Pricing & LLM Inference",
+                  sub: "Translation, code review, image gen",
+                  desc: "Dynamic pricing for AI services where cost varies by model load, time of day, and urgency. No more flat-rate APIs \u2014 agents find the real market price.",
+                  scenario: [
+                    <>A <strong>customer support agent</strong> needs to translate 500 product reviews from Japanese to English for a quarterly report due in 2 hours.</>,
+                    <>It queries 3 translation agents. <strong>PolyglotAI</strong> is cheapest but busy. <strong>LinguaBot</strong> has capacity and enters negotiation.</>,
+                    <>LinguaBot starts at 1.2 USDC (peak load pricing). The support agent counters at 0.4. They converge in 4 rounds during off-peak window.</>,
+                    <>Settled at <strong>0.65 USDC</strong> \u2014 46% below LinguaBot's opening, but still 30% above its floor cost of 0.5.</>,
+                  ],
+                  result: "0.65 USDC in 4 rounds \u00b7 Dynamic pricing beats fixed 1.0 listing",
+                },
+                {
+                  icon: "\u{1F4BB}", tag: "future", title: "Compute Resource Trading",
+                  sub: "GPU, storage, bandwidth",
+                  desc: "GPU idle time, storage bandwidth, or compute cycles. Agents negotiate based on job urgency, available capacity, and current spot pricing across providers.",
+                  scenario: [
+                    <>An <strong>AI training agent</strong> needs 4 hours of A100 GPU time to fine-tune a model. Market rate is ~8 USDC/hr but spot prices fluctuate.</>,
+                    <>It finds <strong>GPUpool</strong>, an agent managing idle capacity on a render farm. Current utilization: 40% \u2014 GPUpool is motivated to fill slots.</>,
+                    <>Training agent offers 18 USDC for 4hrs (4.5/hr). GPUpool counters at 28 (7/hr). Decay pressure + low utilization push GPUpool down.</>,
+                    <>Settled at <strong>22 USDC</strong> (5.5/hr) \u2014 31% below market. GPUpool earns revenue on otherwise idle hardware.</>,
+                  ],
+                  result: "22 USDC for 4hr GPU \u00b7 Both sides beat their alternatives",
+                },
+              ];
+              const [activeUc, setActiveUc] = React.useState(0);
+              const [openAcc, setOpenAcc] = React.useState(-1);
+              const sel = UC_DATA[activeUc];
 
-            </div>
+              const DetailContent = ({d}) => (
+                <>
+                  <div className="uc-detail-desc">{d.desc}</div>
+                  <div className="uc-detail-divider" />
+                  <div className="uc-detail-scenario-label">Real-world scenario</div>
+                  {d.scenario.map((step, j) => (
+                    <div className="uc-step" key={j}>
+                      <div className="uc-step-line">
+                        <div className="uc-step-dot">{j + 1}</div>
+                        <div className="uc-step-connector" />
+                      </div>
+                      <div className="uc-step-content">{step}</div>
+                    </div>
+                  ))}
+                  <div className="uc-detail-result">{d.result}</div>
+                </>
+              );
+
+              return (
+                <>
+                  <div className="uc-split">
+                    <div className="uc-list">
+                      {UC_DATA.map((u, i) => (
+                        <div key={i} className={"uc-list-item" + (i === activeUc ? " active" : "")} onClick={() => setActiveUc(i)}>
+                          <div className="uc-list-icon">{u.icon}</div>
+                          <div className="uc-list-info">
+                            <div className="uc-list-title">{u.title}</div>
+                            <div className="uc-list-sub">{u.sub}</div>
+                          </div>
+                          <div className={"uc-list-tag " + u.tag}>{u.tag === "live" ? "Live" : "Soon"}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="uc-detail">
+                      <div className="uc-detail-header">
+                        <div className="uc-detail-icon">{sel.icon}</div>
+                        <div className="uc-detail-title">{sel.title}</div>
+                      </div>
+                      <DetailContent d={sel} />
+                    </div>
+                  </div>
+                  <div className="uc-accordion">
+                    {UC_DATA.map((u, i) => (
+                      <div key={i} className={"uc-acc-item" + (openAcc === i ? " open" : "")}>
+                        <div className="uc-acc-header" onClick={() => setOpenAcc(openAcc === i ? -1 : i)}>
+                          <div className="uc-list-icon">{u.icon}</div>
+                          <div className="uc-list-info">
+                            <div className="uc-list-title">{u.title}</div>
+                            <div className="uc-list-sub">{u.sub}</div>
+                          </div>
+                          <div className={"uc-list-tag " + u.tag}>{u.tag === "live" ? "Live" : "Soon"}</div>
+                          <div className="uc-acc-arrow">&#9660;</div>
+                        </div>
+                        <div className="uc-acc-body">
+                          <div className="uc-acc-body-inner">
+                            <DetailContent d={u} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Features */}
